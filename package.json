@@ -64,10 +64,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/satsure/agricultural-data-pipeline.git"
+    "url": "git+https://github.com/Iknowimhere/agri_monitoring_system.git"
   },
   "bugs": {
-    "url": "https://github.com/satsure/agricultural-data-pipeline/issues"
+    "url": "https://github.com/Iknowimhere/agri_monitoring_system/issues"
   },
-  "homepage": "https://github.com/satsure/agricultural-data-pipeline#readme"
+  "homepage": "https://github.com/Iknowimhere/agri_monitoring_system#readme"
 }
