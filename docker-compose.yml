@@ -1,0 +1,57 @@
+services:
+  agricultural-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agricultural-data-pipeline
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # Mount data directories for persistence
+      - ./data/raw:/app/data/raw:ro
+      - pipeline_processed:/app/data/processed
+      - pipeline_transformed:/app/data/transformed
+      - pipeline_validation:/app/data/validation
+      - pipeline_reports:/app/data/reports
+      - pipeline_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - pipeline-network
+
+  # Optional: Add a lightweight web server for API documentation
+  docs:
+    image: nginx:alpine
+    container_name: pipeline-docs
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+    depends_on:
+      - agricultural-pipeline
+    networks:
+      - pipeline-network
+
+volumes:
+  pipeline_processed:
+    driver: local
+  pipeline_transformed:
+    driver: local
+  pipeline_validation:
+    driver: local
+  pipeline_reports:
+    driver: local
+  pipeline_logs:
+    driver: local
+
+networks:
+  pipeline-network:
+    driver: bridge

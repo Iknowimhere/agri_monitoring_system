@@ -1,0 +1,752 @@
+[
+  {
+    "sensor_id": "Field-B-temperature-06",
+    "timestamp": "2025-07-16T10:36:34.972Z",
+    "reading_type": "temperature",
+    "value": 28.26,
+    "unit": "°C",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.608823096014127,
+      "longitude": 77.20575295828496
+    },
+    "battery_level": 49,
+    "signal_strength": 16,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-soil_moisture-07",
+    "timestamp": "2025-07-15T20:07:44.451Z",
+    "reading_type": "soil_moisture",
+    "value": 67.39,
+    "unit": "%",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.616576086179954,
+      "longitude": 77.21030170429262
+    },
+    "battery_level": 96,
+    "signal_strength": 39,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-ph_level-03",
+    "timestamp": "2025-07-16T05:27:50.110Z",
+    "reading_type": "ph_level",
+    "value": 7.24,
+    "unit": "pH",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61313998438587,
+      "longitude": 77.21142036136692
+    },
+    "battery_level": 10,
+    "signal_strength": 98,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-potassium-08",
+    "timestamp": "2025-07-16T10:21:03.022Z",
+    "reading_type": "potassium",
+    "value": 44.18,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.618594974970776,
+      "longitude": 77.20961704300747
+    },
+    "battery_level": 71,
+    "signal_strength": 99,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-ph_level-06",
+    "timestamp": "2025-07-16T15:24:55.392Z",
+    "reading_type": "ph_level",
+    "value": 7.06,
+    "unit": "pH",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.617409446106283,
+      "longitude": 77.20455790462951
+    },
+    "battery_level": 61,
+    "signal_strength": 61,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-potassium-03",
+    "timestamp": "2025-07-15T22:21:50.859Z",
+    "reading_type": "potassium",
+    "value": 39.67,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.618821048866216,
+      "longitude": 77.20812264902301
+    },
+    "battery_level": 60,
+    "signal_strength": 66,
+    "data_quality": "questionable"
+  },
+  {
+    "sensor_id": "Field-C-nitrogen-07",
+    "timestamp": "2025-07-16T08:07:02.428Z",
+    "reading_type": "nitrogen",
+    "value": 82.33,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.615480472978234,
+      "longitude": 77.2093396522686
+    },
+    "battery_level": 47,
+    "signal_strength": 72,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-phosphorus-08",
+    "timestamp": "2025-07-15T23:23:49.484Z",
+    "reading_type": "phosphorus",
+    "value": 27.81,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.619854524975693,
+      "longitude": 77.21365902499623
+    },
+    "battery_level": 67,
+    "signal_strength": 37,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-temperature-09",
+    "timestamp": "2025-07-16T13:14:48.278Z",
+    "reading_type": "temperature",
+    "value": 12.71,
+    "unit": "°C",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.616274670843637,
+      "longitude": 77.21421487972044
+    },
+    "battery_level": 5,
+    "signal_strength": 15,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-temperature-10",
+    "timestamp": "2025-07-16T06:59:08.487Z",
+    "reading_type": "temperature",
+    "value": 36.12,
+    "unit": "°C",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.619881304225277,
+      "longitude": 77.20743440761714
+    },
+    "battery_level": 84,
+    "signal_strength": 23,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-soil_moisture-03",
+    "timestamp": "2025-07-15T16:15:20.880Z",
+    "reading_type": "soil_moisture",
+    "value": 66.48,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61108654129266,
+      "longitude": 77.21349892879742
+    },
+    "battery_level": 85,
+    "signal_strength": 74,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-phosphorus-09",
+    "timestamp": "2025-07-15T16:36:06.617Z",
+    "reading_type": "phosphorus",
+    "value": 36.33,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.617379351538162,
+      "longitude": 77.20936128662379
+    },
+    "battery_level": 0,
+    "signal_strength": 32,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-ph_level-04",
+    "timestamp": "2025-07-15T18:38:08.198Z",
+    "reading_type": "ph_level",
+    "value": 6.74,
+    "unit": "pH",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.6115498823967,
+      "longitude": 77.20804233015399
+    },
+    "battery_level": 10,
+    "signal_strength": 11,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-ph_level-10",
+    "timestamp": "2025-07-16T11:43:32.077Z",
+    "reading_type": "ph_level",
+    "value": 7.02,
+    "unit": "pH",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.614813264641832,
+      "longitude": 77.20568435482797
+    },
+    "battery_level": 28,
+    "signal_strength": 66,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-humidity-04",
+    "timestamp": "2025-07-15T20:20:33.851Z",
+    "reading_type": "humidity",
+    "value": 41.16,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.611364033669002,
+      "longitude": 77.2074019556997
+    },
+    "battery_level": 87,
+    "signal_strength": 83,
+    "data_quality": "questionable"
+  },
+  {
+    "sensor_id": "Field-A-temperature-09",
+    "timestamp": "2025-07-16T11:04:44.280Z",
+    "reading_type": "temperature",
+    "value": 26.54,
+    "unit": "°C",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.616832958129216,
+      "longitude": 77.20996987947309
+    },
+    "battery_level": 93,
+    "signal_strength": 58,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-soil_moisture-05",
+    "timestamp": "2025-07-16T02:16:46.924Z",
+    "reading_type": "soil_moisture",
+    "value": 66.37,
+    "unit": "%",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.614623648317774,
+      "longitude": 77.2034528288656
+    },
+    "battery_level": 27,
+    "signal_strength": 58,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-potassium-05",
+    "timestamp": "2025-07-16T08:58:52.514Z",
+    "reading_type": "potassium",
+    "value": 111.24,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.611993933053938,
+      "longitude": 77.20964644498522
+    },
+    "battery_level": 85,
+    "signal_strength": 49,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-phosphorus-08",
+    "timestamp": "2025-07-16T12:26:27.414Z",
+    "reading_type": "phosphorus",
+    "value": 43.18,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61872597696437,
+      "longitude": 77.2101775359353
+    },
+    "battery_level": 87,
+    "signal_strength": 89,
+    "data_quality": "questionable"
+  },
+  {
+    "sensor_id": "Field-A-soil_moisture-04",
+    "timestamp": "2025-07-16T05:34:40.857Z",
+    "reading_type": "soil_moisture",
+    "value": 56.31,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61467118081745,
+      "longitude": 77.20922788351649
+    },
+    "battery_level": 97,
+    "signal_strength": 62,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-phosphorus-10",
+    "timestamp": "2025-07-15T22:16:15.026Z",
+    "reading_type": "phosphorus",
+    "value": 30.63,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.618467562939898,
+      "longitude": 77.20979095481447
+    },
+    "battery_level": 34,
+    "signal_strength": 75,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-soil_moisture-06",
+    "timestamp": "2025-07-16T11:38:19.073Z",
+    "reading_type": "soil_moisture",
+    "value": 74.07,
+    "unit": "%",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.610209819535868,
+      "longitude": 77.21030769515146
+    },
+    "battery_level": 1,
+    "signal_strength": 70,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-potassium-01",
+    "timestamp": "2025-07-15T22:50:02.460Z",
+    "reading_type": "potassium",
+    "value": 80.64,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.611647038728027,
+      "longitude": 77.21293585348918
+    },
+    "battery_level": 85,
+    "signal_strength": 42,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-phosphorus-09",
+    "timestamp": "2025-07-16T13:26:09.170Z",
+    "reading_type": "phosphorus",
+    "value": 47.56,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.611294204251116,
+      "longitude": 77.2057318926892
+    },
+    "battery_level": 14,
+    "signal_strength": 23,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-humidity-10",
+    "timestamp": "2025-07-16T12:06:07.484Z",
+    "reading_type": "humidity",
+    "value": 82.94,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61854366423088,
+      "longitude": 77.20971411075662
+    },
+    "battery_level": 11,
+    "signal_strength": 5,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-temperature-09",
+    "timestamp": "2025-07-15T15:44:50.861Z",
+    "reading_type": "temperature",
+    "value": 15.64,
+    "unit": "°C",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.613434200001898,
+      "longitude": 77.20620477415588
+    },
+    "battery_level": 81,
+    "signal_strength": 35,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-phosphorus-01",
+    "timestamp": "2025-07-16T04:20:46.633Z",
+    "reading_type": "phosphorus",
+    "value": 46.12,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.616180714977826,
+      "longitude": 77.20308967783426
+    },
+    "battery_level": 4,
+    "signal_strength": 83,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-ph_level-07",
+    "timestamp": "2025-07-16T10:56:27.345Z",
+    "reading_type": "ph_level",
+    "value": 7.77,
+    "unit": "pH",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61294984145609,
+      "longitude": 77.207311657838
+    },
+    "battery_level": 83,
+    "signal_strength": 82,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-nitrogen-03",
+    "timestamp": "2025-07-16T04:17:07.005Z",
+    "reading_type": "nitrogen",
+    "value": 95.92,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.6128883229912,
+      "longitude": 77.21309832892274
+    },
+    "battery_level": 80,
+    "signal_strength": 80,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-humidity-04",
+    "timestamp": "2025-07-16T03:29:58.859Z",
+    "reading_type": "humidity",
+    "value": 55.13,
+    "unit": "%",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.61247227359735,
+      "longitude": 77.20902947462068
+    },
+    "battery_level": 28,
+    "signal_strength": 10,
+    "data_quality": "questionable"
+  },
+  {
+    "sensor_id": "Field-B-soil_moisture-02",
+    "timestamp": "2025-07-15T17:15:49.569Z",
+    "reading_type": "soil_moisture",
+    "value": 22.78,
+    "unit": "%",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.614405283718458,
+      "longitude": 77.20905440523319
+    },
+    "battery_level": 79,
+    "signal_strength": 49,
+    "data_quality": "questionable"
+  },
+  {
+    "sensor_id": "Field-B-humidity-09",
+    "timestamp": "2025-07-16T00:29:12.313Z",
+    "reading_type": "humidity",
+    "value": 82.37,
+    "unit": "%",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.6157472923853,
+      "longitude": 77.20689493281087
+    },
+    "battery_level": 0,
+    "signal_strength": 52,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-potassium-07",
+    "timestamp": "2025-07-16T07:26:23.800Z",
+    "reading_type": "potassium",
+    "value": 108.81,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.613864345694,
+      "longitude": 77.2110032309238
+    },
+    "battery_level": 43,
+    "signal_strength": 75,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-nitrogen-03",
+    "timestamp": "2025-07-16T02:51:26.969Z",
+    "reading_type": "nitrogen",
+    "value": 39.99,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.611441513471462,
+      "longitude": 77.21425277664743
+    },
+    "battery_level": 96,
+    "signal_strength": 96,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-soil_moisture-07",
+    "timestamp": "2025-07-15T22:32:30.421Z",
+    "reading_type": "soil_moisture",
+    "value": 45.3,
+    "unit": "%",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.612283581165563,
+      "longitude": 77.20585560114624
+    },
+    "battery_level": 77,
+    "signal_strength": 73,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-temperature-06",
+    "timestamp": "2025-07-15T23:15:18.488Z",
+    "reading_type": "temperature",
+    "value": 15.11,
+    "unit": "°C",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.615419683511238,
+      "longitude": 77.21132491830372
+    },
+    "battery_level": 32,
+    "signal_strength": 71,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-potassium-08",
+    "timestamp": "2025-07-15T18:12:59.648Z",
+    "reading_type": "potassium",
+    "value": 97.07,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61737343661786,
+      "longitude": 77.21232968923152
+    },
+    "battery_level": 17,
+    "signal_strength": 46,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-soil_moisture-10",
+    "timestamp": "2025-07-15T23:28:36.269Z",
+    "reading_type": "soil_moisture",
+    "value": 48.63,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.60988447505641,
+      "longitude": 77.2051333542974
+    },
+    "battery_level": 63,
+    "signal_strength": 87,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-soil_moisture-07",
+    "timestamp": "2025-07-16T14:24:05.847Z",
+    "reading_type": "soil_moisture",
+    "value": 58.07,
+    "unit": "%",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.613921707583497,
+      "longitude": 77.20578708159486
+    },
+    "battery_level": 80,
+    "signal_strength": 38,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-phosphorus-05",
+    "timestamp": "2025-07-16T13:13:34.032Z",
+    "reading_type": "phosphorus",
+    "value": 43.92,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.617471230659405,
+      "longitude": 77.2087222059913
+    },
+    "battery_level": 93,
+    "signal_strength": 80,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-C-ph_level-01",
+    "timestamp": "2025-07-16T14:11:24.819Z",
+    "reading_type": "ph_level",
+    "value": 7.19,
+    "unit": "pH",
+    "location": {
+      "field": "Field-C",
+      "latitude": 28.613114456829628,
+      "longitude": 77.20601316077504
+    },
+    "battery_level": 43,
+    "signal_strength": 9,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-soil_moisture-01",
+    "timestamp": "2025-07-16T05:39:16.421Z",
+    "reading_type": "soil_moisture",
+    "value": 76.54,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.610872274586313,
+      "longitude": 77.20727810593263
+    },
+    "battery_level": 36,
+    "signal_strength": 31,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-phosphorus-10",
+    "timestamp": "2025-07-15T20:50:03.838Z",
+    "reading_type": "phosphorus",
+    "value": 25.45,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.61363817226854,
+      "longitude": 77.20490264451703
+    },
+    "battery_level": 33,
+    "signal_strength": 78,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-temperature-07",
+    "timestamp": "2025-07-15T23:48:53.193Z",
+    "reading_type": "temperature",
+    "value": 10.57,
+    "unit": "°C",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.608351564480824,
+      "longitude": 77.21294656317849
+    },
+    "battery_level": 27,
+    "signal_strength": 13,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-potassium-10",
+    "timestamp": "2025-07-15T16:15:02.682Z",
+    "reading_type": "potassium",
+    "value": 62.04,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.609823649805513,
+      "longitude": 77.21225181211442
+    },
+    "battery_level": 4,
+    "signal_strength": 11,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-A-soil_moisture-10",
+    "timestamp": "2025-07-16T12:17:56.597Z",
+    "reading_type": "soil_moisture",
+    "value": 70.86,
+    "unit": "%",
+    "location": {
+      "field": "Field-A",
+      "latitude": 28.609747511515646,
+      "longitude": 77.21264664919714
+    },
+    "battery_level": 60,
+    "signal_strength": 39,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-humidity-04",
+    "timestamp": "2025-07-16T06:36:36.353Z",
+    "reading_type": "humidity",
+    "value": 53.01,
+    "unit": "%",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.61615703491593,
+      "longitude": 77.20461637019439
+    },
+    "battery_level": 36,
+    "signal_strength": 9,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-temperature-08",
+    "timestamp": "2025-07-16T05:30:19.872Z",
+    "reading_type": "temperature",
+    "value": 24.73,
+    "unit": "°C",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.61044439111645,
+      "longitude": 77.20488389903258
+    },
+    "battery_level": 52,
+    "signal_strength": 6,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-humidity-10",
+    "timestamp": "2025-07-15T15:49:59.018Z",
+    "reading_type": "humidity",
+    "value": 53.16,
+    "unit": "%",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.61577411729208,
+      "longitude": 77.20992832958895
+    },
+    "battery_level": 23,
+    "signal_strength": 54,
+    "data_quality": "good"
+  },
+  {
+    "sensor_id": "Field-B-phosphorus-06",
+    "timestamp": "2025-07-16T09:08:24.200Z",
+    "reading_type": "phosphorus",
+    "value": 13.86,
+    "unit": "ppm",
+    "location": {
+      "field": "Field-B",
+      "latitude": 28.616318648769536,
+      "longitude": 77.20343691388696
+    },
+    "battery_level": 27,
+    "signal_strength": 72,
+    "data_quality": "questionable"
+  }
+]

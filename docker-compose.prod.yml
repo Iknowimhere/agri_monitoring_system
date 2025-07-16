@@ -1,0 +1,56 @@
+services:
+  agricultural-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agricultural-data-pipeline-prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # Production data mounts
+      - /opt/agricultural-data/raw:/app/data/raw:ro
+      - /opt/agricultural-data/processed:/app/data/processed
+      - /opt/agricultural-data/transformed:/app/data/transformed
+      - /opt/agricultural-data/validation:/app/data/validation
+      - /opt/agricultural-data/reports:/app/data/reports
+      - /opt/agricultural-data/logs:/app/logs
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    networks:
+      - pipeline-network
+
+  # Reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: pipeline-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - agricultural-pipeline
+    restart: always
+    networks:
+      - pipeline-network
+
+networks:
+  pipeline-network:
+    driver: bridge

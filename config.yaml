@@ -1,0 +1,57 @@
+ingestion:
+  raw_data_path: 'data/raw'
+  checkpoint_file: 'data/checkpoints/last_processed.txt'
+  file_pattern: '*.parquet'
+
+transformation:
+  calibration:
+    temperature:
+      multiplier: 1.0
+      offset: 0.0
+    humidity:
+      multiplier: 1.0
+      offset: 0.0
+    soil_moisture:
+      multiplier: 1.2
+      offset: -5.0
+    light_intensity:
+      multiplier: 0.95
+      offset: 10.0
+    battery_level:
+      multiplier: 1.0
+      offset: 0.0
+
+  anomaly_thresholds:
+    temperature:
+      min: -10
+      max: 50
+    humidity:
+      min: 0
+      max: 100
+    soil_moisture:
+      min: 0
+      max: 100
+    light_intensity:
+      min: 0
+      max: 100000
+    battery_level:
+      min: 0
+      max: 100
+
+  outlier_z_threshold: 3.0
+  rolling_window_days: 7
+
+validation:
+  output_path: 'data/reports'
+  max_missing_percentage: 20.0
+  max_anomaly_percentage: 10.0
+
+storage:
+  processed_path: 'data/processed'
+  compression: 'snappy'
+  partition_cols: ['date']
+
+logging:
+  level: 'INFO'
+  format: 'json'
+  file: 'logs/pipeline.log'
