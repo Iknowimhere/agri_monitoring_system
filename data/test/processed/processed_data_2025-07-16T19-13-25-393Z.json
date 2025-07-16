@@ -1,0 +1,402 @@
+[
+  {
+    "sensor_id": "BATCH_SENSOR_001",
+    "reading_type": "temperature",
+    "value": 28.44409503428036,
+    "timestamp": "2025-07-16T19:13:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_002",
+    "reading_type": "temperature",
+    "value": 24.144812391316638,
+    "timestamp": "2025-07-16T19:12:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_003",
+    "reading_type": "temperature",
+    "value": 25.894652776608115,
+    "timestamp": "2025-07-16T19:11:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_004",
+    "reading_type": "temperature",
+    "value": 25.045174946211805,
+    "timestamp": "2025-07-16T19:10:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_005",
+    "reading_type": "temperature",
+    "value": 24.76535490803241,
+    "timestamp": "2025-07-16T19:09:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_006",
+    "reading_type": "temperature",
+    "value": 21.761725944523814,
+    "timestamp": "2025-07-16T19:08:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_007",
+    "reading_type": "temperature",
+    "value": 23.030835508567918,
+    "timestamp": "2025-07-16T19:07:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_008",
+    "reading_type": "temperature",
+    "value": 24.504910799952732,
+    "timestamp": "2025-07-16T19:06:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_009",
+    "reading_type": "temperature",
+    "value": 26.677195523701887,
+    "timestamp": "2025-07-16T19:05:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_010",
+    "reading_type": "temperature",
+    "value": 21.351098991766126,
+    "timestamp": "2025-07-16T19:04:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_011",
+    "reading_type": "temperature",
+    "value": 24.044469520171475,
+    "timestamp": "2025-07-16T19:03:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_012",
+    "reading_type": "temperature",
+    "value": 21.489974722422463,
+    "timestamp": "2025-07-16T19:02:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_013",
+    "reading_type": "temperature",
+    "value": 29.966754608528326,
+    "timestamp": "2025-07-16T19:01:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_014",
+    "reading_type": "temperature",
+    "value": 24.53744015267719,
+    "timestamp": "2025-07-16T19:00:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_015",
+    "reading_type": "temperature",
+    "value": 25.922125711039534,
+    "timestamp": "2025-07-16T18:59:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_016",
+    "reading_type": "temperature",
+    "value": 22.99045286719588,
+    "timestamp": "2025-07-16T18:58:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_017",
+    "reading_type": "temperature",
+    "value": 29.21607994001367,
+    "timestamp": "2025-07-16T18:57:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_018",
+    "reading_type": "temperature",
+    "value": 29.55518284805635,
+    "timestamp": "2025-07-16T18:56:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_019",
+    "reading_type": "temperature",
+    "value": 21.97468063792393,
+    "timestamp": "2025-07-16T18:55:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_020",
+    "reading_type": "temperature",
+    "value": 29.4282975387743,
+    "timestamp": "2025-07-16T18:54:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_021",
+    "reading_type": "temperature",
+    "value": 29.486174811772194,
+    "timestamp": "2025-07-16T18:53:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_022",
+    "reading_type": "temperature",
+    "value": 21.75033472149477,
+    "timestamp": "2025-07-16T18:52:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_023",
+    "reading_type": "temperature",
+    "value": 21.41082999311115,
+    "timestamp": "2025-07-16T18:51:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_024",
+    "reading_type": "temperature",
+    "value": 21.2394596236497,
+    "timestamp": "2025-07-16T18:50:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_025",
+    "reading_type": "temperature",
+    "value": 25.09108749189192,
+    "timestamp": "2025-07-16T18:49:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_026",
+    "reading_type": "temperature",
+    "value": 24.468380136198128,
+    "timestamp": "2025-07-16T18:48:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_027",
+    "reading_type": "temperature",
+    "value": 28.433236069167613,
+    "timestamp": "2025-07-16T18:47:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_028",
+    "reading_type": "temperature",
+    "value": 24.687906343116087,
+    "timestamp": "2025-07-16T18:46:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_029",
+    "reading_type": "temperature",
+    "value": 21.201870074189873,
+    "timestamp": "2025-07-16T18:45:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_030",
+    "reading_type": "temperature",
+    "value": 28.847214601611505,
+    "timestamp": "2025-07-16T18:44:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_031",
+    "reading_type": "temperature",
+    "value": 22.768463764342744,
+    "timestamp": "2025-07-16T18:43:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_032",
+    "reading_type": "temperature",
+    "value": 25.37358185833685,
+    "timestamp": "2025-07-16T18:42:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_033",
+    "reading_type": "temperature",
+    "value": 26.112459093379954,
+    "timestamp": "2025-07-16T18:41:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_034",
+    "reading_type": "temperature",
+    "value": 21.961547321951286,
+    "timestamp": "2025-07-16T18:40:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_035",
+    "reading_type": "temperature",
+    "value": 21.608709727355432,
+    "timestamp": "2025-07-16T18:39:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_036",
+    "reading_type": "temperature",
+    "value": 26.48678271605943,
+    "timestamp": "2025-07-16T18:38:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_037",
+    "reading_type": "temperature",
+    "value": 21.187227448786736,
+    "timestamp": "2025-07-16T18:37:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_038",
+    "reading_type": "temperature",
+    "value": 26.326547980400814,
+    "timestamp": "2025-07-16T18:36:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_039",
+    "reading_type": "temperature",
+    "value": 20.64484081732073,
+    "timestamp": "2025-07-16T18:35:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_040",
+    "reading_type": "temperature",
+    "value": 25.57193905034578,
+    "timestamp": "2025-07-16T18:34:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_041",
+    "reading_type": "temperature",
+    "value": 25.854548270696398,
+    "timestamp": "2025-07-16T18:33:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_042",
+    "reading_type": "temperature",
+    "value": 21.995583960421335,
+    "timestamp": "2025-07-16T18:32:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_043",
+    "reading_type": "temperature",
+    "value": 28.689964378732196,
+    "timestamp": "2025-07-16T18:31:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_044",
+    "reading_type": "temperature",
+    "value": 27.60909102701195,
+    "timestamp": "2025-07-16T18:30:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_045",
+    "reading_type": "temperature",
+    "value": 27.441839735231888,
+    "timestamp": "2025-07-16T18:29:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_046",
+    "reading_type": "temperature",
+    "value": 24.305445041685743,
+    "timestamp": "2025-07-16T18:28:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_047",
+    "reading_type": "temperature",
+    "value": 24.474763433524515,
+    "timestamp": "2025-07-16T18:27:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_048",
+    "reading_type": "temperature",
+    "value": 20.456572878280856,
+    "timestamp": "2025-07-16T18:26:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_049",
+    "reading_type": "temperature",
+    "value": 28.462825573955733,
+    "timestamp": "2025-07-16T18:25:25.392Z",
+    "field": "batch_test",
+    "location": "test_location"
+  },
+  {
+    "sensor_id": "BATCH_SENSOR_050",
+    "reading_type": "temperature",
+    "value": 22.826666837089483,
+    "timestamp": "2025-07-16T18:24:25.393Z",
+    "field": "batch_test",
+    "location": "test_location"
+  }
+]

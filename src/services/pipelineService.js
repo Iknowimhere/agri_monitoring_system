@@ -3,6 +3,7 @@ const IngestionService = require('./ingestion/ingestionService');
 const TransformationService = require('./transformation/transformationService');
 const ValidationService = require('./validation/validationService');
 const StorageService = require('./storage/storageService');
+const DuckDBService = require('./duckDBService');
 const FileUtils = require('../utils/fileUtils');
 const DateUtils = require('../utils/dateUtils');
 const config = require('../config/config');
@@ -11,6 +12,9 @@ const fs = require('fs');
 
 class PipelineService {
   constructor() {
+    // Initialize DuckDB service for pipeline operations
+    this.duckDBService = new DuckDBService(config);
+
     this.status = {
       status: 'idle', // idle, running, completed, failed
       stage: null,
@@ -57,6 +61,17 @@ class PipelineService {
       };
 
       logger.info('Starting full pipeline execution', { startDate, endDate, forceReprocess });
+
+      // Initialize DuckDB service for pipeline
+      this.status.stage = 'database_initialization';
+      this.status.progress = 5;
+      
+      try {
+        await this.duckDBService.initialize();
+        logger.info('DuckDB initialized for pipeline operations');
+      } catch (error) {
+        logger.warn('DuckDB initialization failed, continuing with fallback:', error);
+      }
 
       // Stage 1: Ingestion
       this.status.stage = 'ingestion';
@@ -233,6 +248,71 @@ class PipelineService {
       logger.error('Failed to read logs:', error);
       return [];
     }
+  }
+
+  // Static method for processing data directly (used by tests)
+  static async processData(data) {
+    logger.info('Processing data batch', { count: data.length });
+    
+    try {
+      let processed = 0;
+      let stored = 0;
+      const errors = [];
+      
+      // Initialize services
+      const transformationService = new TransformationService(config);
+      const validationService = new ValidationService(config);
+      const duckDBService = new DuckDBService(config);
+      
+      // Initialize DuckDB
+      await duckDBService.initialize();
+      
+      // Process each record
+      for (const record of data) {
+        try {
+          // Transform
+          const transformed = await transformationService.transformRecord(record);
+          
+          // Validate
+          const validation = await validationService.validateRecord(transformed);
+          
+          if (validation.valid) {
+            // Store in DuckDB
+            await duckDBService.insertData(transformed);
+            processed++;
+            stored++;
+          } else {
+            errors.push({ record, validation });
+          }
+        } catch (error) {
+          errors.push({ record, error: error.message });
+        }
+      }
+      
+      return {
+        success: true,
+        processed,
+        stored,
+        errors: errors.length,
+        validation: {
+          passed: processed,
+          failed: errors.length
+        }
+      };
+    } catch (error) {
+      logger.error('Failed to process data:', error);
+      return {
+        success: false,
+        processed: 0,
+        stored: 0,
+        errors: data.length,
+        error: error.message
+      };
+    }
+  }
+
+  async processData(data) {
+    return PipelineService.processData(data);
   }
 }
 

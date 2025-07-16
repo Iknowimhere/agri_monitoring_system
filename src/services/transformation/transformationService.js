@@ -1,17 +1,20 @@
-// const Database = require('duckdb'); // TODO: Will use DuckDB when C++ build tools are available
+// DuckDB integration with fallback support
 const logger = require('../../utils/logger');
+const DuckDBService = require('../duckDBService');
+const buildToolsChecker = require('../../utils/buildToolsChecker');
 const path = require('path');
 const fs = require('fs');
 
 class TransformationService {
   constructor(config) {
     this.config = config;
+    this.duckDBService = null;
     this.initStorage();
   }
 
-  initStorage() {
+  async initStorage() {
     try {
-      logger.info('Transformation storage initialization - using file-based approach temporarily');
+      logger.info('Transformation service initialization - checking DuckDB availability');
       
       const dataDir = path.join(process.cwd(), 'data');
       const rawDir = path.join(dataDir, 'raw');
@@ -25,8 +28,15 @@ class TransformationService {
       
       this.rawDataPath = rawDir;
       this.transformedDataPath = transformedDir;
+
+      // Initialize DuckDB service
+      this.duckDBService = new DuckDBService(this.config);
+      const dbResult = await this.duckDBService.initialize();
       
-      logger.info('Transformation storage initialized successfully');
+      logger.info('Transformation storage initialized successfully', {
+        duckdb: dbResult.mode === 'duckdb',
+        fallback: dbResult.mode === 'fallback'
+      });
     } catch (error) {
       logger.error('Transformation storage initialization failed:', error);
       throw error;
@@ -39,28 +49,46 @@ class TransformationService {
     const stats = {
       recordsProcessed: 0,
       recordsSkipped: 0,
-      errors: 0
+      errors: 0,
+      storage: this.duckDBService?.isUsingDuckDB() ? 'duckdb' : 'fallback'
     };
 
     try {
       const files = await fs.promises.readdir(this.rawDataPath);
-      const jsonFiles = files.filter(f => f.endsWith('.json'));
+      const dataFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.parquet'));
       
-      if (jsonFiles.length === 0) {
+      if (dataFiles.length === 0) {
         logger.warn('No raw data files found for transformation');
         return stats;
       }
 
-      for (const file of jsonFiles) {
+      let allTransformedData = [];
+
+      for (const file of dataFiles) {
         try {
           const filePath = path.join(this.rawDataPath, file);
-          const rawData = JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
+          let rawData;
+
+          if (file.endsWith('.json')) {
+            rawData = JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
+          } else if (file.endsWith('.parquet')) {
+            // Use DataService to read Parquet files
+            const DataService = require('../dataService');
+            rawData = await DataService.readParquetFile(filePath);
+          }
           
           const transformedData = await this.performTransformations(rawData);
           
-          const outputFile = path.join(this.transformedDataPath, `transformed_${file}`);
+          // Store in DuckDB or fallback
+          if (this.duckDBService) {
+            await this.duckDBService.insertData(transformedData);
+          }
+
+          // Also save to file for backup
+          const outputFile = path.join(this.transformedDataPath, `transformed_${file.replace('.parquet', '.json')}`);
           await fs.promises.writeFile(outputFile, JSON.stringify(transformedData, null, 2));
           
+          allTransformedData = allTransformedData.concat(transformedData);
           stats.recordsProcessed += Array.isArray(transformedData) ? transformedData.length : 1;
           
         } catch (error) {
@@ -70,7 +98,7 @@ class TransformationService {
       }
 
       logger.info('Data transformation completed', stats);
-      return stats;
+      return { ...stats, transformedData: allTransformedData };
     } catch (error) {
       stats.errors++;
       logger.error('Data transformation failed:', error);
@@ -111,6 +139,55 @@ class TransformationService {
     if (!record.sensor_id) score -= 15;
     if (record.battery_level < 20) score -= 10;
     return Math.max(0, score);
+  }
+
+  async queryTransformedData(filters = {}) {
+    if (this.duckDBService) {
+      return await this.duckDBService.queryData(filters);
+    } else {
+      // Fallback to file-based querying
+      const files = await fs.promises.readdir(this.transformedDataPath);
+      const jsonFiles = files.filter(f => f.endsWith('.json'));
+      
+      let allData = [];
+      for (const file of jsonFiles) {
+        try {
+          const filePath = path.join(this.transformedDataPath, file);
+          const data = JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
+          allData = allData.concat(Array.isArray(data) ? data : [data]);
+        } catch (error) {
+          logger.warn(`Failed to read ${file}:`, error.message);
+        }
+      }
+
+      // Apply basic filtering
+      return allData.filter(record => {
+        if (filters.sensor_id && record.sensor_id !== filters.sensor_id) return false;
+        if (filters.reading_type && record.reading_type !== filters.reading_type) return false;
+        return true;
+      });
+    }
+  }
+
+  async getTransformationStats() {
+    if (this.duckDBService) {
+      return await this.duckDBService.getStats();
+    } else {
+      const data = await this.queryTransformedData();
+      return {
+        total: data.length,
+        byType: data.reduce((acc, record) => {
+          const type = record.reading_type;
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {}),
+        source: 'file-based'
+      };
+    }
+  }
+
+  async checkBuildTools() {
+    return await buildToolsChecker.getRecommendations();
   }
 }
 

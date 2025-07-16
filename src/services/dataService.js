@@ -1,183 +1,176 @@
-// const duckdb = require('duckdb'); // TODO: Will use DuckDB when C++ build tools are available
 const logger = require('../utils/logger');
+const DuckDBService = require('./duckDBService');
 const DateUtils = require('../utils/dateUtils');
-const path = require('path');
-const fs = require('fs');
-const parquet = require('@dsnp/parquetjs');
+const config = require('../config/config');
 
 class DataService {
   constructor() {
-    this.initStorage();
+    this.duckDBService = null;
+    this.initialized = false;
   }
 
-  initStorage() {
+  async initializeDatabase() {
+    if (this.initialized) return;
+    
     try {
-      logger.info('Data service initialization - using file-based approach temporarily');
+      logger.info('DataService: Initializing DuckDB connection...');
       
-      const dataDir = path.join(process.cwd(), 'data');
-      const processedDir = path.join(dataDir, 'processed');
+      this.duckDBService = new DuckDBService(config);
+      const result = await this.duckDBService.initialize();
       
-      [dataDir, processedDir].forEach(dir => {
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
+      this.initialized = true;
+      logger.info('DataService: DuckDB initialized successfully', { 
+        mode: result.mode,
+        success: result.success 
       });
-      
-      this.processedDataPath = processedDir;
-      
-      logger.info('Data service initialized successfully');
     } catch (error) {
-      logger.error('Data service initialization failed:', error);
+      logger.error('DataService: Failed to initialize DuckDB:', error);
       throw error;
     }
   }
 
+  async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initializeDatabase();
+    }
+  }
+
   async queryData(filters) {
-    logger.info('Querying processed data', filters);
+    await this.ensureInitialized();
+    logger.info('Querying data with DuckDB', filters);
 
     try {
-      // Load all processed data files
-      const allData = await this.loadProcessedData();
+      // Convert filters to DuckDB format
+      const duckDBFilters = {
+        sensor_id: filters.sensor_id,
+        reading_type: filters.reading_type,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        field: filters.field,
+        limit: filters.limit
+      };
+
+      // Query data from DuckDB
+      const result = await this.duckDBService.queryData(duckDBFilters);
       
-      // Apply filters
-      let filteredData = allData;
-      
-      if (filters.sensor_id) {
-        filteredData = filteredData.filter(record => record.sensor_id === filters.sensor_id);
-      }
-
-      if (filters.reading_type) {
-        filteredData = filteredData.filter(record => record.reading_type === filters.reading_type);
-      }
-
-      if (filters.startDate) {
-        const startDate = new Date(filters.startDate);
-        filteredData = filteredData.filter(record => new Date(record.timestamp) >= startDate);
-      }
-
-      if (filters.endDate) {
-        const endDate = new Date(filters.endDate);
-        filteredData = filteredData.filter(record => new Date(record.timestamp) <= endDate);
-      }
+      // Apply additional filtering that DuckDB service doesn't handle
+      let filteredData = result.data;
 
       if (filters.anomalous !== undefined) {
-        filteredData = filteredData.filter(record => record.anomalous_reading === filters.anomalous);
+        filteredData = filteredData.filter(record => 
+          record.anomalous_reading === filters.anomalous
+        );
       }
 
       if (filters.minValue !== undefined) {
-        filteredData = filteredData.filter(record => record.value >= filters.minValue);
+        filteredData = filteredData.filter(record => 
+          record.value >= filters.minValue
+        );
       }
 
       if (filters.maxValue !== undefined) {
-        filteredData = filteredData.filter(record => record.value <= filters.maxValue);
+        filteredData = filteredData.filter(record => 
+          record.value <= filters.maxValue
+        );
       }
 
-      // Apply sorting
-      const sortBy = filters.sortBy || 'timestamp';
-      const sortOrder = filters.sortOrder || 'DESC';
-      
-      filteredData.sort((a, b) => {
-        const aVal = a[sortBy];
-        const bVal = b[sortBy];
+      // Apply custom sorting if different from timestamp
+      if (filters.sortBy && filters.sortBy !== 'timestamp') {
+        const sortBy = filters.sortBy;
+        const sortOrder = (filters.sortOrder || 'DESC').toUpperCase();
         
-        if (sortOrder === 'ASC') {
-          return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-        } else {
-          return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
-        }
-      });
+        filteredData.sort((a, b) => {
+          const aVal = a[sortBy];
+          const bVal = b[sortBy];
+          
+          if (sortOrder === 'ASC') {
+            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+          } else {
+            return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+          }
+        });
+      }
 
-      // Apply pagination
+      // Apply pagination (DuckDB handles limit, but we need page-based pagination)
       const page = filters.page || 1;
       const limit = filters.limit || 100;
       const offset = (page - 1) * limit;
-      const paginatedData = filteredData.slice(offset, offset + limit);
+      
+      // If we didn't get all data due to DuckDB limit, we need to re-query
+      if (!filters.limit || filters.limit > limit) {
+        const paginatedData = filteredData.slice(offset, offset + limit);
+        
+        return {
+          success: true,
+          data: paginatedData,
+          page,
+          limit,
+          total: filteredData.length,
+          source: result.source
+        };
+      }
 
       return {
-        data: paginatedData,
+        success: true,
+        data: filteredData,
         page,
         limit,
-        total: filteredData.length
+        total: filteredData.length,
+        source: result.source
       };
+
     } catch (error) {
       logger.error('Failed to query data:', error);
       throw error;
     }
   }
 
-  async loadProcessedData() {
-    const allData = [];
-    
-    if (!fs.existsSync(this.processedDataPath)) {
-      return allData;
-    }
-    
-    const files = await fs.promises.readdir(this.processedDataPath);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
-    const parquetFiles = files.filter(f => f.endsWith('.parquet'));
-    
-    // Load JSON files
-    for (const file of jsonFiles) {
-      try {
-        const filePath = path.join(this.processedDataPath, file);
-        const data = JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
-        const records = Array.isArray(data) ? data : [data];
-        allData.push(...records);
-      } catch (error) {
-        logger.error(`Failed to load JSON data file ${file}:`, error);
-      }
-    }
-    
-    // Load Parquet files
-    for (const file of parquetFiles) {
-      try {
-        const filePath = path.join(this.processedDataPath, file);
-        const records = await this.readParquetFile(filePath);
-        allData.push(...records);
-      } catch (error) {
-        logger.error(`Failed to load Parquet data file ${file}:`, error);
-      }
-    }
-    
-    return allData;
-  }
-
   async getSensors() {
-    logger.info('Getting sensors list');
+    await this.ensureInitialized();
+    logger.info('Getting unique sensors with DuckDB');
 
     try {
-      const allData = await this.loadProcessedData();
+      const result = await this.duckDBService.queryData({});
+      const data = result.data;
       
-      // Group data by sensor_id to get sensor summary
+      // Extract unique sensors and their information
       const sensorMap = new Map();
       
-      for (const record of allData) {
+      data.forEach(record => {
         if (!sensorMap.has(record.sensor_id)) {
           sensorMap.set(record.sensor_id, {
             sensor_id: record.sensor_id,
-            last_reading: record.timestamp,
             reading_types: new Set(),
+            locations: new Set(),
+            latest_reading: record.timestamp,
             total_readings: 0
           });
         }
         
         const sensor = sensorMap.get(record.sensor_id);
         sensor.reading_types.add(record.reading_type);
-        sensor.total_readings++;
         
-        // Update last reading if this is more recent
-        if (new Date(record.timestamp) > new Date(sensor.last_reading)) {
-          sensor.last_reading = record.timestamp;
+        if (record.field) {
+          sensor.locations.add(record.field);
         }
-      }
-      
-      // Convert to array and format
+        
+        if (new Date(record.timestamp) > new Date(sensor.latest_reading)) {
+          sensor.latest_reading = record.timestamp;
+        }
+        
+        sensor.total_readings++;
+      });
+
+      // Convert Sets to Arrays for JSON serialization
       const sensors = Array.from(sensorMap.values()).map(sensor => ({
         ...sensor,
-        reading_types: Array.from(sensor.reading_types)
+        reading_types: Array.from(sensor.reading_types),
+        locations: Array.from(sensor.locations)
       }));
-      
+
+      logger.info('Retrieved sensors', { count: sensors.length });
       return sensors;
+
     } catch (error) {
       logger.error('Failed to get sensors:', error);
       throw error;
@@ -185,139 +178,128 @@ class DataService {
   }
 
   async getSensorSummary(sensorId, options = {}) {
-    logger.info('Getting sensor summary', { sensorId, ...options });
+    await this.ensureInitialized();
+    logger.info('Getting sensor summary with DuckDB', { sensorId, options });
 
     try {
-      const allData = await this.loadProcessedData();
-      
-      // Filter by sensor_id
-      let sensorData = allData.filter(record => record.sensor_id === sensorId);
-      
-      // Apply date filters if provided
-      if (options.startDate) {
-        const startDate = new Date(options.startDate);
-        sensorData = sensorData.filter(record => new Date(record.timestamp) >= startDate);
-      }
-      
-      if (options.endDate) {
-        const endDate = new Date(options.endDate);
-        sensorData = sensorData.filter(record => new Date(record.timestamp) <= endDate);
-      }
-      
-      // Group by reading_type and calculate statistics
-      const summaryMap = new Map();
-      
-      for (const record of sensorData) {
-        if (!summaryMap.has(record.reading_type)) {
-          summaryMap.set(record.reading_type, {
-            reading_type: record.reading_type,
-            total_readings: 0,
-            values: [],
-            anomalous_count: 0
-          });
-        }
-        
-        const summary = summaryMap.get(record.reading_type);
-        summary.total_readings++;
-        summary.values.push(record.value);
-        
-        if (record.anomalous_reading) {
-          summary.anomalous_count++;
-        }
-      }
-      
-      // Calculate statistics for each reading type
-      const result = Array.from(summaryMap.values()).map(summary => {
-        const values = summary.values.filter(v => typeof v === 'number');
-        
+      const filters = {
+        sensor_id: sensorId,
+        startDate: options.startDate,
+        endDate: options.endDate
+      };
+
+      const result = await this.duckDBService.queryData(filters);
+      const data = result.data;
+
+      if (data.length === 0) {
         return {
-          reading_type: summary.reading_type,
-          total_readings: summary.total_readings,
-          avg_value: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0,
-          min_value: values.length > 0 ? Math.min(...values) : 0,
-          max_value: values.length > 0 ? Math.max(...values) : 0,
-          std_deviation: this.calculateStdDev(values),
-          anomalous_count: summary.anomalous_count
+          sensor_id: sensorId,
+          total_readings: 0,
+          reading_types: [],
+          date_range: null,
+          latest_reading: null,
+          statistics: {}
         };
+      }
+
+      // Calculate summary statistics
+      const readingTypes = [...new Set(data.map(r => r.reading_type))];
+      const statistics = {};
+
+      readingTypes.forEach(type => {
+        const typeData = data.filter(r => r.reading_type === type);
+        const values = typeData.map(r => r.value).filter(v => v !== null && v !== undefined);
+        
+        if (values.length > 0) {
+          statistics[type] = {
+            count: values.length,
+            min: Math.min(...values),
+            max: Math.max(...values),
+            avg: values.reduce((a, b) => a + b, 0) / values.length,
+            latest_value: typeData[0].value,
+            latest_timestamp: typeData[0].timestamp
+          };
+        }
       });
-      
-      return result;
+
+      const timestamps = data.map(r => new Date(r.timestamp));
+      const summary = {
+        sensor_id: sensorId,
+        total_readings: data.length,
+        reading_types: readingTypes,
+        date_range: {
+          start: new Date(Math.min(...timestamps)).toISOString(),
+          end: new Date(Math.max(...timestamps)).toISOString()
+        },
+        latest_reading: data[0].timestamp,
+        statistics,
+        source: result.source
+      };
+
+      return summary;
+
     } catch (error) {
       logger.error('Failed to get sensor summary:', error);
       throw error;
     }
   }
 
-  calculateStdDev(values) {
-    if (values.length === 0) return 0;
-    
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
-    const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
-    
-    return Math.sqrt(avgSquaredDiff);
-  }
-
   async getDailyAggregations(filters) {
-    logger.info('Getting daily aggregations', filters);
+    await this.ensureInitialized();
+    logger.info('Getting daily aggregations with DuckDB', filters);
 
     try {
-      const allData = await this.loadProcessedData();
-      
-      // Apply filters
-      let filteredData = allData;
-      
-      if (filters.reading_type) {
-        filteredData = filteredData.filter(record => record.reading_type === filters.reading_type);
-      }
-      
-      if (filters.startDate) {
-        const startDate = new Date(filters.startDate);
-        filteredData = filteredData.filter(record => new Date(record.timestamp) >= startDate);
-      }
-      
-      if (filters.endDate) {
-        const endDate = new Date(filters.endDate);
-        filteredData = filteredData.filter(record => new Date(record.timestamp) <= endDate);
-      }
-      
-      // Group by date and reading_type
-      const aggregationMap = new Map();
-      
-      for (const record of filteredData) {
-        const date = new Date(record.timestamp).toISOString().split('T')[0];
-        const key = `${date}_${record.reading_type}`;
-        
-        if (!aggregationMap.has(key)) {
-          aggregationMap.set(key, {
-            date,
-            reading_type: record.reading_type,
-            values: [],
-            reading_count: 0
-          });
-        }
-        
-        const agg = aggregationMap.get(key);
-        if (typeof record.value === 'number') {
-          agg.values.push(record.value);
-        }
-        agg.reading_count++;
-      }
-      
-      // Calculate aggregations
-      const result = Array.from(aggregationMap.values()).map(agg => ({
-        date: agg.date,
-        reading_type: agg.reading_type,
-        avg_value: agg.values.length > 0 ? agg.values.reduce((a, b) => a + b, 0) / agg.values.length : 0,
-        min_value: agg.values.length > 0 ? Math.min(...agg.values) : 0,
-        max_value: agg.values.length > 0 ? Math.max(...agg.values) : 0,
-        reading_count: agg.reading_count
-      })).sort((a, b) => {
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
-        return a.reading_type.localeCompare(b.reading_type);
+      // Use DuckDB for efficient aggregation
+      const result = await this.duckDBService.queryData({
+        sensor_id: filters.sensor_id,
+        reading_type: filters.reading_type,
+        startDate: filters.startDate,
+        endDate: filters.endDate
       });
+
+      const data = result.data;
+
+      // Group by date
+      const dailyData = {};
       
-      return result;
+      data.forEach(record => {
+        const date = new Date(record.timestamp).toISOString().split('T')[0];
+        
+        if (!dailyData[date]) {
+          dailyData[date] = {
+            date,
+            readings: [],
+            count: 0
+          };
+        }
+        
+        dailyData[date].readings.push(record.value);
+        dailyData[date].count++;
+      });
+
+      // Calculate aggregations
+      const aggregations = Object.values(dailyData).map(day => {
+        const values = day.readings.filter(v => v !== null && v !== undefined);
+        
+        return {
+          date: day.date,
+          count: day.count,
+          min: values.length > 0 ? Math.min(...values) : null,
+          max: values.length > 0 ? Math.max(...values) : null,
+          avg: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null,
+          sum: values.length > 0 ? values.reduce((a, b) => a + b, 0) : null
+        };
+      });
+
+      // Sort by date
+      aggregations.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      return {
+        aggregations,
+        total_days: aggregations.length,
+        source: result.source
+      };
+
     } catch (error) {
       logger.error('Failed to get daily aggregations:', error);
       throw error;
@@ -325,11 +307,19 @@ class DataService {
   }
 
   async getAnomalies(filters) {
-    logger.info('Getting anomalies', filters);
+    await this.ensureInitialized();
+    logger.info('Getting anomalies with DuckDB', filters);
 
     try {
-      const anomalyFilters = { ...filters, anomalous: true };
-      return await this.queryData(anomalyFilters);
+      const result = await this.duckDBService.queryData(filters);
+      const anomalies = result.data.filter(record => record.anomalous_reading === true);
+
+      return {
+        data: anomalies,
+        total: anomalies.length,
+        source: result.source
+      };
+
     } catch (error) {
       logger.error('Failed to get anomalies:', error);
       throw error;
@@ -337,22 +327,35 @@ class DataService {
   }
 
   async exportData(format, filters) {
-    logger.info('Exporting data', { format, filters });
+    await this.ensureInitialized();
+    logger.info('Exporting data with DuckDB', { format, filters });
 
     try {
-      const result = await this.queryData({ ...filters, limit: 10000 }); // Large limit for export
+      const result = await this.duckDBService.queryData(filters);
       const data = result.data;
 
-      switch (format) {
+      // Convert BigInt values to regular numbers to avoid JSON serialization issues
+      const sanitizedData = data.map(record => {
+        const sanitized = {};
+        for (const [key, value] of Object.entries(record)) {
+          if (typeof value === 'bigint') {
+            sanitized[key] = Number(value);
+          } else {
+            sanitized[key] = value;
+          }
+        }
+        return sanitized;
+      });
+
+      switch (format.toLowerCase()) {
         case 'csv':
-          return this.convertToCSV(data);
+          return this.convertToCSV(sanitizedData);
         case 'json':
-          return JSON.stringify(data, null, 2);
-        case 'parquet':
-          return await this.exportToParquet(data, filters);
+          return JSON.stringify(sanitizedData, null, 2);
         default:
           throw new Error(`Unsupported export format: ${format}`);
       }
+
     } catch (error) {
       logger.error('Failed to export data:', error);
       throw error;
@@ -360,194 +363,98 @@ class DataService {
   }
 
   convertToCSV(data) {
-    if (!data || data.length === 0) {
-      return '';
-    }
-
+    if (data.length === 0) return '';
+    
     const headers = Object.keys(data[0]);
-    const csvLines = [headers.join(',')];
-
-    for (const row of data) {
-      const line = headers.map(header => {
+    const csvRows = [headers.join(',')];
+    
+    data.forEach(row => {
+      const values = headers.map(header => {
         const value = row[header];
         return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
-      }).join(',');
-      csvLines.push(line);
-    }
-
-    return csvLines.join('\n');
+      });
+      csvRows.push(values.join(','));
+    });
+    
+    return csvRows.join('\n');
   }
 
   async getQueryCount(filters) {
-    // Implementation to get total count for pagination
+    await this.ensureInitialized();
+    
     try {
-      const allData = await this.loadProcessedData();
+      const stats = await this.duckDBService.getStats();
       
-      // Apply the same filters as queryData to get accurate count
-      let filteredData = allData;
-      
-      if (filters.sensor_id) {
-        filteredData = filteredData.filter(record => record.sensor_id === filters.sensor_id);
-      }
-
-      if (filters.reading_type) {
-        filteredData = filteredData.filter(record => record.reading_type === filters.reading_type);
-      }
-
-      if (filters.startDate) {
-        const startDate = new Date(filters.startDate);
-        filteredData = filteredData.filter(record => new Date(record.timestamp) >= startDate);
-      }
-
-      if (filters.endDate) {
-        const endDate = new Date(filters.endDate);
-        filteredData = filteredData.filter(record => new Date(record.timestamp) <= endDate);
-      }
-
-      if (filters.anomalous !== undefined) {
-        filteredData = filteredData.filter(record => record.anomalous_reading === filters.anomalous);
-      }
-
-      if (filters.minValue !== undefined) {
-        filteredData = filteredData.filter(record => record.value >= filters.minValue);
-      }
-
-      if (filters.maxValue !== undefined) {
-        filteredData = filteredData.filter(record => record.value <= filters.maxValue);
-      }
-      
-      return filteredData.length;
-    } catch (error) {
-      logger.error('Failed to get query count:', error);
-      return 0;
-    }
-  }
-
-  async readParquetFile(filePath) {
-    try {
-      logger.info(`Reading Parquet file: ${filePath}`);
-      
-      const reader = await parquet.ParquetReader.openFile(filePath);
-      const cursor = reader.getCursor();
-      const records = [];
-      
-      let record = null;
-      while (record = await cursor.next()) {
-        // Convert Parquet record to plain JavaScript object and handle BigInt
-        const plainRecord = {};
-        for (const [key, value] of Object.entries(record)) {
-          if (typeof value === 'bigint') {
-            // Convert BigInt to Number (safe for most sensor data)
-            plainRecord[key] = Number(value);
-          } else if (value && typeof value === 'object' && value.constructor === Object) {
-            // Handle nested objects (like location)
-            const nestedObj = {};
-            for (const [nestedKey, nestedValue] of Object.entries(value)) {
-              if (typeof nestedValue === 'bigint') {
-                nestedObj[nestedKey] = Number(nestedValue);
-              } else {
-                nestedObj[nestedKey] = nestedValue;
-              }
-            }
-            plainRecord[key] = nestedObj;
-          } else {
-            plainRecord[key] = value;
-          }
-        }
-        records.push(plainRecord);
-      }
-      
-      await reader.close();
-      logger.info(`Successfully read ${records.length} records from Parquet file: ${filePath}`);
-      
-      return records;
-    } catch (error) {
-      logger.error(`Failed to read Parquet file ${filePath}:`, error);
-      throw error;
-    }
-  }
-
-  async exportToParquet(data, filters) {
-    try {
-      if (!data || data.length === 0) {
-        throw new Error('No data to export');
-      }
-
-      // Create filename with timestamp and filters
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filterSuffix = filters.reading_type ? `_${filters.reading_type}` : '';
-      const filename = `export${filterSuffix}_${timestamp}.parquet`;
-      const filePath = path.join(this.processedDataPath, filename);
-
-      // Define Parquet schema based on data structure
-      const sampleRecord = data[0];
-      const schema = new parquet.ParquetSchema({
-        sensor_id: { type: 'UTF8' },
-        timestamp: { type: 'TIMESTAMP_MILLIS' },
-        reading_type: { type: 'UTF8' },
-        value: { type: 'DOUBLE' },
-        unit: { type: 'UTF8', optional: true },
-        location: {
-          optional: true,
-          fields: {
-            field: { type: 'UTF8', optional: true },
-            latitude: { type: 'DOUBLE', optional: true },
-            longitude: { type: 'DOUBLE', optional: true }
-          }
-        },
-        battery_level: { type: 'INT32', optional: true },
-        signal_strength: { type: 'INT32', optional: true },
-        data_quality: { type: 'UTF8', optional: true },
-        processed_timestamp: { type: 'TIMESTAMP_MILLIS', optional: true },
-        calibrated_value: { type: 'DOUBLE', optional: true },
-        quality_score: { type: 'DOUBLE', optional: true },
-        anomalous_reading: { type: 'BOOLEAN', optional: true }
-      });
-
-      // Create Parquet writer
-      const writer = await parquet.ParquetWriter.openFile(schema, filePath);
-
-      // Write data records
-      for (const record of data) {
-        const parquetRecord = {
-          sensor_id: record.sensor_id || '',
-          timestamp: new Date(record.timestamp),
-          reading_type: record.reading_type || '',
-          value: parseFloat(record.value) || 0,
-          unit: record.unit || null,
-          location: record.location ? {
-            field: record.location.field || null,
-            latitude: record.location.latitude || null,
-            longitude: record.location.longitude || null
-          } : null,
-          battery_level: record.battery_level ? parseInt(record.battery_level) : null,
-          signal_strength: record.signal_strength ? parseInt(record.signal_strength) : null,
-          data_quality: record.data_quality || null,
-          processed_timestamp: record.processed_timestamp ? new Date(record.processed_timestamp) : null,
-          calibrated_value: record.calibrated_value ? parseFloat(record.calibrated_value) : null,
-          quality_score: record.quality_score ? parseFloat(record.quality_score) : null,
-          anomalous_reading: record.anomalous_reading || false
+      // Apply filter-based counting if needed
+      if (Object.keys(filters).length > 0) {
+        const result = await this.duckDBService.queryData(filters);
+        return {
+          total: result.data.length,
+          source: result.source
         };
-
-        await writer.appendRow(parquetRecord);
       }
-
-      await writer.close();
-      
-      logger.info(`Successfully exported ${data.length} records to Parquet file: ${filePath}`);
       
       return {
-        format: 'parquet',
-        filename,
-        path: filePath,
-        records: data.length,
-        message: `Data exported successfully to ${filename}`
+        total: stats.total,
+        source: stats.source
       };
+
     } catch (error) {
-      logger.error('Failed to export to Parquet:', error);
+      logger.error('Failed to get query count:', error);
       throw error;
+    }
+  }
+
+  async insertData(data) {
+    await this.ensureInitialized();
+    
+    try {
+      return await this.duckDBService.insertData(data);
+    } catch (error) {
+      logger.error('Failed to insert data:', error);
+      throw error;
+    }
+  }
+
+  async updateData(id, updates) {
+    await this.ensureInitialized();
+    
+    try {
+      return await this.duckDBService.updateData(id, updates);
+    } catch (error) {
+      logger.error('Failed to update data:', error);
+      throw error;
+    }
+  }
+
+  async deleteData(id) {
+    await this.ensureInitialized();
+    
+    try {
+      return await this.duckDBService.deleteData(id);
+    } catch (error) {
+      logger.error('Failed to delete data:', error);
+      throw error;
+    }
+  }
+
+  async getStats() {
+    await this.ensureInitialized();
+    
+    try {
+      return await this.duckDBService.getStats();
+    } catch (error) {
+      logger.error('Failed to get stats:', error);
+      throw error;
+    }
+  }
+
+  async close() {
+    if (this.duckDBService) {
+      await this.duckDBService.close();
     }
   }
 }
 
+// Export singleton instance
 module.exports = new DataService();

@@ -1,0 +1,10 @@
+[
+  {
+    "sensor_id": "TEST_SENSOR_001",
+    "reading_type": "temperature",
+    "value": 25.5,
+    "timestamp": "2025-07-16T19:23:24.628Z",
+    "field": "test_field",
+    "location": "test_location"
+  }
+]

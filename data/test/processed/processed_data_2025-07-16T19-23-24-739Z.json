@@ -1,0 +1,8 @@
+[
+  {
+    "sensor_id": "",
+    "reading_type": "temperature",
+    "value": "not_a_number",
+    "timestamp": "invalid_timestamp"
+  }
+]

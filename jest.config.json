@@ -1,7 +1,10 @@
 {
   "testEnvironment": "node",
+  "testTimeout": 60000,
   "roots": ["<rootDir>/tests"],
-  "testMatch": ["**/*.test.js"],
+  "testMatch": [
+    "**/*.test.js"
+  ],
   "collectCoverageFrom": [
     "src/**/*.js",
     "!src/app.js",

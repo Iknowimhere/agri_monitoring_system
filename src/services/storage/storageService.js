@@ -3,13 +3,28 @@ const path = require('path');
 const logger = require('../../utils/logger');
 const FileUtils = require('../../utils/fileUtils');
 const DateUtils = require('../../utils/dateUtils');
+const DuckDBService = require('../duckDBService');
 
 class StorageService {
   constructor(config) {
     this.config = config;
     this.dataPath = path.join(config.paths.data, 'processed');
     this.dbPath = path.join(config.paths.data, 'database');
+    
+    // Initialize DuckDB service
+    this.duckDBService = new DuckDBService(config);
+    this.initializeDatabase();
+    
     this.ensureDirectories();
+  }
+
+  async initializeDatabase() {
+    try {
+      await this.duckDBService.initialize();
+      logger.info('StorageService: DuckDB initialized for data storage');
+    } catch (error) {
+      logger.warn('StorageService: Failed to initialize DuckDB, using file fallback:', error);
+    }
   }
 
   async ensureDirectories() {
@@ -21,13 +36,68 @@ class StorageService {
     }
   }
 
-  // TODO: Replace with DuckDB when C++ build tools are available
+  // Use DuckDB for efficient data storage
   async storeData(data = null) {
-    logger.info('Starting data storage process');
+    logger.info('Starting data storage process with DuckDB');
     
     const statistics = {
       filesWritten: 0,
       recordsStored: 0,
+      databaseRecords: 0,
+      errors: 0
+    };
+
+    try {
+      // Load data if not provided
+      if (!data) {
+        data = await this.loadValidatedData();
+      }
+
+      if (!data || data.length === 0) {
+        logger.warn('No data available for storage');
+        return statistics;
+      }
+
+      // Store in DuckDB
+      try {
+        const insertResult = await this.duckDBService.insertData(data);
+        statistics.databaseRecords = insertResult.recordCount || 0;
+        logger.info('Data stored in DuckDB successfully', { 
+          records: statistics.databaseRecords,
+          source: insertResult.source || 'duckdb'
+        });
+      } catch (dbError) {
+        logger.error('Failed to store in DuckDB, falling back to file storage:', dbError);
+        statistics.errors++;
+      }
+
+      // Also maintain file-based backup
+      const timestamp = DateUtils.nowIST().toISOString().replace(/[:.]/g, '-');
+      const filename = `processed_data_${timestamp}.json`;
+      const filepath = path.join(this.dataPath, filename);
+
+      await fs.writeFile(filepath, JSON.stringify(data, null, 2));
+      statistics.filesWritten = 1;
+      statistics.recordsStored = data.length;
+
+      logger.info('Data storage completed', statistics);
+      return statistics;
+
+    } catch (error) {
+      logger.error('Data storage failed:', error);
+      statistics.errors++;
+      throw error;
+    }
+  }
+
+  // Use DuckDB for efficient data storage
+  async storeData(data = null) {
+    logger.info('Starting data storage process with DuckDB');
+    
+    const statistics = {
+      filesWritten: 0,
+      recordsStored: 0,
+      databaseRecords: 0,
       errors: 0
     };
 

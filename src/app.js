@@ -9,6 +9,9 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 
+// Import DuckDB service for global initialization
+const DuckDBService = require('./services/duckDBService');
+
 // Import routes
 const pipelineRoutes = require('./routes/pipeline');
 const dataRoutes = require('./routes/data');
@@ -16,6 +19,30 @@ const reportsRoutes = require('./routes/reports');
 const healthRoutes = require('./routes/health');
 
 const app = express();
+
+// Initialize DuckDB service globally
+let globalDuckDBService = null;
+
+async function initializeDatabase() {
+  try {
+    logger.info('Initializing global DuckDB service...');
+    globalDuckDBService = new DuckDBService(config);
+    const result = await globalDuckDBService.initialize();
+    
+    logger.info('Global DuckDB service initialized', { 
+      mode: result.mode,
+      success: result.success 
+    });
+    
+    // Make DuckDB service available globally
+    app.locals.duckDBService = globalDuckDBService;
+    
+    return result;
+  } catch (error) {
+    logger.error('Failed to initialize DuckDB service:', error);
+    throw error;
+  }
+}
 
 // Security middleware
 app.use(helmet());
@@ -71,25 +98,8 @@ app.get('/', (req, res) => {
 // Static files (after API routes)
 app.use(express.static('public'));
 
-// Error handling
+// Error handling middleware (must be last)
 app.use(errorHandler);
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Endpoint not found',
-    message: `Cannot ${req.method} ${req.originalUrl}`
-  });
-});
-
-const PORT = config.server.port;
-
-// Only start server if not in test environment
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    logger.info(`Agricultural Data Pipeline API server running on port ${PORT}`);
-    logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
-  });
-}
-
-module.exports = app;
+// Export app and initialization function
+module.exports = { app, initializeDatabase, getDuckDBService: () => globalDuckDBService };
