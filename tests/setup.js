@@ -46,6 +46,64 @@ global.testUtils = {
     } catch (error) {
       // Directory doesn't exist or other error, ignore
     }
+  },
+
+  // Generate unique test ID for each test run
+  generateTestId() {
+    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  },
+  
+  getTestConfig(testId) {
+    const baseConfig = require('../src/config/config');
+    const uniqueTestId = testId || global.testUtils.generateTestId();
+    
+    return {
+      ...baseConfig,
+      testId: uniqueTestId,
+      database: {
+        ...baseConfig.database,
+        duckdbPath: path.join(process.cwd(), 'data', 'database', `test_${uniqueTestId}.duckdb`),
+        sqlitePath: path.join(process.cwd(), 'data', 'database', `test_${uniqueTestId}.sqlite`)
+      },
+      paths: {
+        ...baseConfig.paths,
+        processedData: path.join(process.cwd(), 'data', `test-processed-${uniqueTestId}`),
+        rawData: baseConfig.paths.rawData // Keep shared raw data
+      }
+    };
+  },
+  
+  async cleanupTestFiles(testId) {
+    if (!testId) return;
+    
+    try {
+      const dataDir = path.join(process.cwd(), 'data');
+      
+      // Clean up test databases
+      const dbDir = path.join(dataDir, 'database');
+      const dbFiles = await fs.readdir(dbDir).catch(() => []);
+      
+      for (const file of dbFiles) {
+        if (file.includes(`test_${testId}`) && (file.endsWith('.duckdb') || file.endsWith('.sqlite'))) {
+          try {
+            await fs.unlink(path.join(dbDir, file));
+          } catch (error) {
+            // Ignore cleanup errors
+          }
+        }
+      }
+      
+      // Clean up test processed directories  
+      const processedDir = path.join(dataDir, `test-processed-${testId}`);
+      try {
+        await fs.rm(processedDir, { recursive: true, force: true });
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+      
+    } catch (error) {
+      // Ignore cleanup errors
+    }
   }
 };
 

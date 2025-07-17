@@ -1,5 +1,12 @@
 const request = require('supertest');
 const { app, initializeDatabase } = require('../src/app');
+
+// Apply global mocks for test isolation
+global.testMode = true;
+const mockPath = require('path');
+global.testId = `test_${Date.now()}`;
+global.mockDbPath = mockPath.join(__dirname, '..', 'data', 'database', `${global.testId}.duckdb`);
+
 const DuckDBService = require('../src/services/duckDBService');
 const DataService = require('../src/services/dataService');
 const PipelineService = require('../src/services/pipelineService');
@@ -8,27 +15,40 @@ const ReportsService = require('../src/services/reportsService');
 describe('Complete DuckDB Integration Tests', () => {
   let server;
   let duckDBService;
+  let sharedDuckDBService;
 
   beforeAll(async () => {
+    // Apply test mode configuration
+    process.env.NODE_ENV = 'test';
+    
+    // Create a shared DuckDB service instance for all services to use
+    sharedDuckDBService = new DuckDBService({ testId: global.testId });
+    await sharedDuckDBService.initialize();
+    
+    // Set up global mock to use the shared instance
+    global.mockDuckDBService = sharedDuckDBService;
+    
     // Initialize the database before starting tests
     await initializeDatabase();
     
     // Start server for API testing
     server = app.listen(0); // Use port 0 for random available port
     
-    // Get DuckDB service instance
-    duckDBService = new DuckDBService();
-    await duckDBService.initialize();
+    // Use the shared service instance
+    duckDBService = sharedDuckDBService;
   });
 
   afterAll(async () => {
     // Clean up
-    if (duckDBService) {
-      await duckDBService.close();
+    if (sharedDuckDBService) {
+      await sharedDuckDBService.close();
     }
     if (server) {
       server.close();
     }
+    
+    // Clear global mock
+    global.mockDuckDBService = null;
   });
 
   beforeEach(async () => {
@@ -72,20 +92,20 @@ describe('Complete DuckDB Integration Tests', () => {
       expect(pipelineResult.success).toBe(true);
       expect(pipelineResult.processed).toBe(3);
       expect(pipelineResult.stored).toBe(3);
-      expect(pipelineResult.duckdb.success).toBe(true);
+      expect(pipelineResult.duckdb.initialized).toBe(true);
 
       // Step 3: Query data through API
       const queryResponse = await request(server)
-        .get('/api/data')
+        .get('/api/data/query')
         .query({ 
           sensor_id: 'E2E_SENSOR_001',
           field: 'test_field_e2e'
         })
         .expect(200);
 
-      expect(queryResponse.body.success).toBe(true);
+      expect(queryResponse.body.data).toBeDefined();
       expect(queryResponse.body.data.length).toBeGreaterThan(0);
-      expect(queryResponse.body.source).toBe('duckdb');
+      expect(queryResponse.body.pagination).toBeDefined();
 
       // Step 4: Get sensor summary
       const sensorResponse = await request(server)

@@ -10,11 +10,20 @@ class DuckDBService {
     this.isAvailable = false;
     this.dbType = null; // 'duckdb', 'sqlite', or 'fallback'
     
-    // Create proper data paths
+    // Create proper data paths with test isolation
     const dataRoot = path.join(process.cwd(), 'data');
-    this.duckdbPath = path.join(dataRoot, 'database', 'agricultural_data.duckdb');
-    this.sqlitePath = path.join(dataRoot, 'database', 'agricultural_data.sqlite');
-    this.fallbackPath = (config && config.paths && config.paths.processedData) ? config.paths.processedData : path.join(dataRoot, 'processed');
+    
+    // Use test-specific paths if in test environment
+    if (process.env.NODE_ENV === 'test') {
+      const testId = config.testId || Date.now();
+      this.duckdbPath = config.duckdbPath || path.join(dataRoot, 'database', `test_${testId}.duckdb`);
+      this.sqlitePath = config.sqlitePath || path.join(dataRoot, 'database', `test_${testId}.sqlite`);
+      this.fallbackPath = config.paths?.processedData || path.join(dataRoot, 'test-processed');
+    } else {
+      this.duckdbPath = config.duckdbPath || path.join(dataRoot, 'database', 'agricultural_data.duckdb');
+      this.sqlitePath = config.sqlitePath || path.join(dataRoot, 'database', 'agricultural_data.sqlite');
+      this.fallbackPath = (config && config.paths && config.paths.processedData) ? config.paths.processedData : path.join(dataRoot, 'processed');
+    }
   }
 
   async initialize() {
@@ -25,25 +34,46 @@ class DuckDBService {
       const duckdbAvailable = await this.checkDuckDB();
       if (duckdbAvailable) {
         await this.initializeDuckDB();
-        return { success: true, mode: 'duckdb' };
+        return { 
+          success: true, 
+          mode: 'duckdb',
+          database: 'duckdb',
+          dbPath: this.duckdbPath
+        };
       }
 
       // Try SQLite as fallback
       const sqliteAvailable = await this.checkSQLite();
       if (sqliteAvailable) {
         await this.initializeSQLite();
-        return { success: true, mode: 'sqlite' };
+        return { 
+          success: true, 
+          mode: 'sqlite',
+          database: 'sqlite',
+          dbPath: this.sqlitePath
+        };
       }
 
       // Use file-based fallback
       logger.warn('Neither DuckDB nor SQLite available, using file-based fallback');
       await this.initializeFallback();
-      return { success: true, mode: 'fallback' };
+      return { 
+        success: true, 
+        mode: 'fallback',
+        database: 'fallback',
+        dbPath: this.fallbackPath
+      };
       
     } catch (error) {
       logger.error('Database service initialization failed:', error);
       await this.initializeFallback();
-      return { success: true, mode: 'fallback', error: error.message };
+      return { 
+        success: true, 
+        mode: 'fallback', 
+        database: 'fallback',
+        dbPath: this.fallbackPath,
+        error: error.message 
+      };
     }
   }
 
@@ -298,6 +328,9 @@ class DuckDBService {
 
   async insertDataFallback(records) {
     try {
+      // Ensure the fallback directory exists
+      await fs.mkdir(this.fallbackPath, { recursive: true });
+      
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `processed_data_${timestamp}.json`;
       const filepath = path.join(this.fallbackPath, filename);
@@ -426,6 +459,9 @@ class DuckDBService {
 
   async queryDataFallback(filters = {}) {
     try {
+      // Ensure the fallback directory exists
+      await fs.mkdir(this.fallbackPath, { recursive: true });
+      
       const files = await fs.readdir(this.fallbackPath);
       const jsonFiles = files.filter(f => f.endsWith('.json'));
       
@@ -613,18 +649,75 @@ class DuckDBService {
     }
   }
 
+  async readParquet(filePath, options = {}) {
+    logger.info('Reading Parquet file with DuckDB', { filePath, options });
+    
+    if (!this.isAvailable || this.dbType !== 'duckdb') {
+      throw new Error('DuckDB is required for Parquet file reading');
+    }
+
+    try {
+      // Use DuckDB's built-in Parquet support
+      let sql = `SELECT * FROM read_parquet('${filePath}')`;
+      
+      // Apply any filters from options
+      if (options.where) {
+        sql += ` WHERE ${options.where}`;
+      }
+      
+      if (options.orderBy) {
+        sql += ` ORDER BY ${options.orderBy}`;
+      }
+      
+      if (options.limit) {
+        sql += ` LIMIT ${options.limit}`;
+      }
+
+      const results = await this.allDuckDBQuery(sql, []);
+      
+      logger.info('Successfully read Parquet file', { 
+        filePath, 
+        recordCount: results.length 
+      });
+      
+      return {
+        success: true,
+        data: results,
+        source: 'duckdb-parquet',
+        filePath
+      };
+      
+    } catch (error) {
+      logger.error('Failed to read Parquet file with DuckDB:', error);
+      throw error;
+    }
+  }
+
   async close() {
     if (this.db) {
-      return new Promise((resolve) => {
-        this.db.close((err) => {
-          if (err) {
-            logger.error('Error closing DuckDB:', err);
-          } else {
-            logger.info('DuckDB connection closed');
-          }
-          resolve();
+      if (this.dbType === 'duckdb') {
+        return new Promise((resolve) => {
+          this.db.close((err) => {
+            if (err) {
+              logger.error('Error closing DuckDB:', err);
+            } else {
+              logger.info('DuckDB connection closed');
+            }
+            this.db = null;
+            this.isAvailable = false;
+            resolve();
+          });
         });
-      });
+      } else if (this.dbType === 'sqlite') {
+        try {
+          this.db.close();
+          this.db = null;
+          this.isAvailable = false;
+          logger.info('SQLite connection closed');
+        } catch (error) {
+          logger.error('Error closing SQLite:', error);
+        }
+      }
     }
   }
 
@@ -651,6 +744,19 @@ class DuckDBService {
   }
 
   async updateDataDuckDB(id, updates) {
+    // First check if record exists
+    const checkSQL = `SELECT COUNT(*) as count FROM sensor_data WHERE id = $1`;
+    const checkResult = await this.allDuckDBQuery(checkSQL, [id]);
+    const exists = checkResult[0] && Number(checkResult[0].count) > 0;
+    
+    if (!exists) {
+      return {
+        success: true,
+        updated: 0,
+        id: id
+      };
+    }
+    
     // Build SET clause dynamically based on updates
     const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
     const updateSQL = `UPDATE sensor_data SET ${setClause} WHERE id = $1`;
@@ -711,6 +817,19 @@ class DuckDBService {
   }
 
   async deleteDataDuckDB(id) {
+    // First check if record exists
+    const checkSQL = `SELECT COUNT(*) as count FROM sensor_data WHERE id = $1`;
+    const checkResult = await this.allDuckDBQuery(checkSQL, [id]);
+    const exists = checkResult[0] && Number(checkResult[0].count) > 0;
+    
+    if (!exists) {
+      return {
+        success: true,
+        deleted: 0,
+        id: id
+      };
+    }
+    
     const deleteSQL = `DELETE FROM sensor_data WHERE id = $1`;
     const result = await this.runDuckDBQuery(deleteSQL, [id]);
     

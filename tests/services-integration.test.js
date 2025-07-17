@@ -1,16 +1,41 @@
+// Apply global mocks for test isolation
+global.testMode = true;
+const mockPath = require('path');
+global.testId = `test_${Date.now()}`;
+global.mockDbPath = mockPath.join(__dirname, '..', 'data', 'database', `${global.testId}.duckdb`);
+
 const DataService = require('../src/services/dataService');
 const PipelineService = require('../src/services/pipelineService');
+const DuckDBService = require('../src/services/duckDBService');
 
 describe('Basic Service Integration Tests', () => {
+  let sharedDuckDBService;
+
   beforeAll(async () => {
+    // Apply test mode configuration
+    process.env.NODE_ENV = 'test';
+    
+    // Create a shared DuckDB service instance for all services to use
+    sharedDuckDBService = new DuckDBService({ testId: global.testId });
+    await sharedDuckDBService.initialize();
+    
+    // Set up global mock to use the shared instance
+    global.mockDuckDBService = sharedDuckDBService;
+    
     // Initialize services
     await DataService.ensureInitialized();
   });
 
   afterAll(async () => {
     // Clean up
+    if (sharedDuckDBService) {
+      await sharedDuckDBService.close();
+    }
     await DataService.close();
     await PipelineService.close();
+    
+    // Clear global mock
+    global.mockDuckDBService = null;
   });
 
   describe('DataService Integration', () => {

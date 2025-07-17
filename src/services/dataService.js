@@ -15,7 +15,16 @@ class DataService {
     try {
       logger.info('DataService: Initializing DuckDB connection...');
       
-      this.duckDBService = new DuckDBService(config);
+      // Check if we're in test mode and use global mock
+      const isTestMode = process.env.NODE_ENV === 'test' || global.testUtils;
+      
+      if (isTestMode && global.mockDuckDBService) {
+        this.duckDBService = global.mockDuckDBService;
+        logger.info('DataService: Using mocked DuckDB service for testing');
+      } else {
+        this.duckDBService = new DuckDBService(config);
+      }
+      
       const result = await this.duckDBService.initialize();
       
       this.initialized = true;
@@ -445,6 +454,26 @@ class DataService {
       return await this.duckDBService.getStats();
     } catch (error) {
       logger.error('Failed to get stats:', error);
+      throw error;
+    }
+  }
+
+  async readParquetFile(filePath, options = {}) {
+    await this.ensureInitialized();
+    logger.info('Reading Parquet file with DuckDB', { filePath, options });
+    
+    try {
+      // Use DuckDB to read Parquet files directly
+      const result = await this.duckDBService.readParquet(filePath, options);
+      
+      logger.info('Successfully read Parquet file', { 
+        filePath, 
+        recordCount: result.data ? result.data.length : 0 
+      });
+      
+      return result;
+    } catch (error) {
+      logger.error('Failed to read Parquet file:', error);
       throw error;
     }
   }

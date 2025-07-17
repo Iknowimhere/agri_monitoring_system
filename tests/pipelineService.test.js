@@ -45,6 +45,16 @@ describe('PipelineService with DuckDB Integration', () => {
     StorageService.storeProcessedData = mockStorageService.storeProcessedData;
     StorageService.storeValidationReport = mockStorageService.storeValidationReport;
     StorageService.storeRawData = mockStorageService.storeRawData;
+
+    // Set global mocks for the PipelineService to use
+    global.mockDuckDBService = mockDuckDBService;
+    global.mockStorageService = mockStorageService;
+  });
+
+  afterEach(() => {
+    // Clean up global mocks
+    delete global.mockDuckDBService;
+    delete global.mockStorageService;
   });
 
   describe('Pipeline Processing', () => {
@@ -430,10 +440,10 @@ describe('PipelineService with DuckDB Integration', () => {
       expect(mockDuckDBService.close).toHaveBeenCalled();
     });
 
-    test('should reset pipeline state', () => {
+    test('should reset pipeline state', async () => {
       PipelineService.reset();
       
-      const status = PipelineService.getStatus();
+      const status = await PipelineService.getStatus();
       expect(status.totalProcessed).toBe(0);
       expect(status.lastProcessed).toBeNull();
     });

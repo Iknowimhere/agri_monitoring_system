@@ -8,8 +8,8 @@ const DuckDBService = require('../duckDBService');
 class StorageService {
   constructor(config) {
     this.config = config;
-    this.dataPath = path.join(config.paths.data, 'processed');
-    this.dbPath = path.join(config.paths.data, 'database');
+    this.dataPath = config.paths.processedData || 'data/processed';
+    this.dbPath = path.dirname(config.database.sqlitePath) || 'data';
     
     // Initialize DuckDB service
     this.duckDBService = new DuckDBService(config);
@@ -104,17 +104,23 @@ class StorageService {
     try {
       // If no data provided, read from transformation output
       if (!data) {
-        const transformedDataPath = path.join(this.config.paths.data, 'transformed');
-        const files = await fs.readdir(transformedDataPath);
+        const transformedDataPath = path.join(path.dirname(this.dataPath), 'transformed');
         
-        for (const file of files) {
-          if (file.endsWith('.json')) {
-            const filePath = path.join(transformedDataPath, file);
-            const fileData = JSON.parse(await fs.readFile(filePath, 'utf8'));
-            await this.storeRecords(fileData, file);
-            statistics.filesWritten++;
-            statistics.recordsStored += Array.isArray(fileData) ? fileData.length : 1;
+        try {
+          await fs.mkdir(transformedDataPath, { recursive: true });
+          const files = await fs.readdir(transformedDataPath);
+        
+          for (const file of files) {
+            if (file.endsWith('.json')) {
+              const filePath = path.join(transformedDataPath, file);
+              const fileData = JSON.parse(await fs.readFile(filePath, 'utf8'));
+              await this.storeRecords(fileData, file);
+              statistics.filesWritten++;
+              statistics.recordsStored += Array.isArray(fileData) ? fileData.length : 1;
+            }
           }
+        } catch (error) {
+          logger.warn('No transformed data found, proceeding with empty storage:', error.message);
         }
       } else {
         await this.storeRecords(data, 'direct_data.json');

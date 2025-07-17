@@ -1,8 +1,11 @@
 const logger = require('../utils/logger');
-const PipelineService = require('../services/pipelineService');
+const PipelineServiceClass = require('../services/pipelineService');
 const FileUtils = require('../utils/fileUtils');
 const config = require('../config/config');
 const path = require('path');
+
+// Create singleton instance of PipelineService
+const PipelineService = new PipelineServiceClass();
 
 class PipelineController {
   static async getStatus(req, res, next) {
