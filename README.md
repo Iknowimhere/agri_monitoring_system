@@ -153,11 +153,73 @@ docker run -p 3000:3000 -v ${PWD}/data:/app/data ag-pipeline-api
 
 ### Reports
 
+The pipeline provides comprehensive reporting capabilities with multiple access methods:
+
+#### API Endpoints
+
 - `GET /api/reports/quality` - Generate data quality report
 - `GET /api/reports/processing` - Get processing statistics
 - `GET /api/reports/coverage` - Get data coverage analysis
 - `GET /api/reports/anomalies` - Get anomaly detection report
 - `GET /api/reports/list` - List generated reports
+- `GET /api/reports/{report_id}` - Download specific report by ID
+
+#### Report Storage
+
+Reports are automatically stored in multiple locations:
+
+- **File Storage**: `data/reports/` directory
+- **Report Types**:
+  - `quality_*.json` - Data quality analysis reports
+  - `summary_*.json` - Summary statistics reports
+  - `analytics_*.json` - Analytics and insights reports
+  - `processing_*.json` - Pipeline processing statistics
+  - `custom_*.json` - Custom generated reports
+
+#### Report Formats
+
+- **JSON**: Default format for API responses
+- **CSV**: Available for quality reports using `?format=csv` parameter
+- **Direct Download**: Use report ID to download files
+
+#### Access Methods
+
+1. **Web Dashboard**: Visit `http://localhost` and click "📊 Generate Report"
+2. **API Calls**: Direct HTTP requests to report endpoints
+3. **File Access**: Direct access to stored report files
+4. **PowerShell**: Use `Invoke-RestMethod` for Windows environments
+
+#### Example Commands
+
+```bash
+# Generate quality report
+curl http://localhost/api/reports/quality
+
+# Get processing statistics
+curl http://localhost/api/reports/processing
+
+# List all reports
+curl http://localhost/api/reports/list
+
+# Download specific report
+curl http://localhost/api/reports/quality_1234567890
+
+# Generate CSV format quality report
+curl "http://localhost/api/reports/quality?format=csv"
+```
+
+#### PowerShell Examples
+
+```powershell
+# Generate quality report
+Invoke-RestMethod -Uri "http://localhost/api/reports/quality"
+
+# Get processing report
+Invoke-RestMethod -Uri "http://localhost/api/reports/processing"
+
+# List all reports
+Invoke-RestMethod -Uri "http://localhost/api/reports/list"
+```
 
 ### System
 
@@ -224,22 +286,98 @@ calibrated_value = raw_value * multiplier + offset
 
 ## Data Quality Report
 
-The pipeline generates comprehensive quality reports including:
+The pipeline generates comprehensive quality reports with detailed metrics and analysis:
 
-- Missing value percentages by reading_type
-- Anomalous reading percentages
-- Time coverage gaps per sensor
-- Schema validation results
-- Processing statistics
+### Report Content
 
-Example report structure:
+- **Missing value percentages** by reading_type and sensor
+- **Anomalous reading percentages** with statistical analysis
+- **Time coverage gaps** per sensor with gap duration
+- **Schema validation results** and data type compliance
+- **Processing statistics** with performance metrics
+- **Quality scores** and overall health assessments
+
+### Report Types Generated
+
+1. **Quality Reports** (`quality_*.json`)
+
+   - Data completeness analysis
+   - Accuracy rate calculations
+   - Missing values and outlier detection
+   - Overall quality scoring (0-100%)
+
+2. **Processing Reports** (`processing_*.json`)
+
+   - Records ingested, transformed, and stored
+   - Processing time and performance metrics
+   - Duplicates removed and outliers detected
+   - Average records per second throughput
+
+3. **Summary Reports** (`summary_*.json`)
+   - Total sensors and data points
+   - Active vs inactive sensor counts
+   - Quality score summaries
+   - Sensor-specific statistics
+
+### Example Report Structure (CSV Format)
 
 ```csv
 metric,reading_type,sensor_id,value,timestamp
 missing_percentage,temperature,SENSOR_001,2.3,2023-06-01T10:00:00Z
 anomaly_percentage,humidity,SENSOR_002,0.8,2023-06-01T10:00:00Z
 gap_hours,soil_moisture,SENSOR_003,4,2023-06-01T10:00:00Z
+quality_score,overall,ALL_SENSORS,87.5,2023-06-01T10:00:00Z
 ```
+
+### Example Report Structure (JSON Format)
+
+```json
+{
+  "report_id": "quality_1752739518864",
+  "generated_at": "2025-07-17T08:05:18.893Z",
+  "metadata": {
+    "source": "duckdb",
+    "file_path": "/reports/quality_1752739518864.json"
+  },
+  "quality_metrics": {
+    "completeness": 95.2,
+    "accuracy_rate": 87.5,
+    "total_records": 150000,
+    "missing_values": 1200,
+    "outliers": 300
+  },
+  "summary": {
+    "overall_quality_score": 87.5,
+    "total_sensors": 3,
+    "total_readings": 150000,
+    "quality_issues": 1500
+  }
+}
+```
+
+### Real-time Report Generation
+
+Reports are generated automatically and can be accessed immediately:
+
+- **Automatic Storage**: All reports saved to `data/reports/` directory
+- **Instant Access**: Available via API endpoints immediately after generation
+- **Multiple Formats**: JSON (default) and CSV export options
+- **Historical Archive**: All generated reports are preserved for analysis
+
+## 🎥 Demo Video
+
+Watch the complete pipeline in action:
+
+[![Agricultural Data Pipeline Demo](https://img.shields.io/badge/▶️_Watch_Demo-blue?style=for-the-badge)](demo/pipeline-demo.mp4)
+
+The demo showcases:
+
+- **Data Ingestion**: Loading Parquet files and processing sensor data
+- **Transformation**: Real-time data cleaning, calibration, and anomaly detection
+- **Validation**: Quality checks and report generation
+- **DuckDB Queries**: Interactive data analysis and aggregations
+
+_Demo video shows the complete pipeline processing 10,000+ sensor readings in under 30 seconds_
 
 ## Usage Examples
 
@@ -270,6 +408,40 @@ curl "http://localhost:3000/api/data/query?sensor_id=SENSOR_001&reading_type=tem
 
 # Generate quality report
 curl http://localhost:3000/api/reports/quality
+
+# Generate processing report
+curl http://localhost:3000/api/reports/processing
+
+# List all generated reports
+curl http://localhost:3000/api/reports/list
+
+# Get anomaly detection report
+curl http://localhost:3000/api/reports/anomalies
+
+# Export quality report as CSV
+curl "http://localhost:3000/api/reports/quality?format=csv"
+
+# Download specific report by ID
+curl http://localhost:3000/api/reports/quality_1752739518864
+```
+
+### PowerShell Examples:
+
+```powershell
+# Check pipeline status
+Invoke-RestMethod -Uri "http://localhost/api/pipeline/status"
+
+# Generate and view quality report
+$qualityReport = Invoke-RestMethod -Uri "http://localhost/api/reports/quality"
+$qualityReport | ConvertTo-Json -Depth 10
+
+# Get processing statistics
+$processingReport = Invoke-RestMethod -Uri "http://localhost/api/reports/processing"
+Write-Output "Records Processed: $($processingReport.statistics.records_ingested)"
+
+# List all available reports
+$reportList = Invoke-RestMethod -Uri "http://localhost/api/reports/list"
+Write-Output "Total Reports Generated: $($reportList.total_reports)"
 ```
 
 ### Using the Web Dashboard:

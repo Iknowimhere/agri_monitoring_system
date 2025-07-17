@@ -9,7 +9,7 @@ services:
       - PORT=3000
     volumes:
       # Mount data directories for persistence
-      - ./data/raw:/app/data/raw:ro
+      - ./data/raw:/app/data/raw
       - pipeline_processed:/app/data/processed
       - pipeline_transformed:/app/data/transformed
       - pipeline_validation:/app/data/validation

@@ -46,6 +46,7 @@ class PipelineService {
   constructor() {
     // Initialize DuckDB service for pipeline operations
     this.duckDBService = new DuckDBService(config);
+    this.duckDBInitialized = false;
 
     this.status = {
       status: 'idle', // idle, running, completed, failed
@@ -62,10 +63,20 @@ class PipelineService {
     };
     this.isRunning = false;
     this.shouldStop = false;
+    
+    // Initialize DuckDB service in background
+    this.initializeDuckDB();
   }
 
-  async getStatus() {
-    return { ...this.status };
+  async initializeDuckDB() {
+    try {
+      await this.duckDBService.initialize();
+      this.duckDBInitialized = true;
+      logger.info('PipelineService: DuckDB initialized successfully');
+    } catch (error) {
+      logger.error('PipelineService: Failed to initialize DuckDB:', error);
+      this.duckDBInitialized = false;
+    }
   }
 
   async runFullPipeline(options = {}) {
@@ -377,29 +388,6 @@ class PipelineService {
     return transformed;
   }
 
-  async getStatus() {
-    const baseStatus = { ...this.status };
-    
-    // Add enhanced status information
-    baseStatus.lastProcessed = this.lastProcessed || null;
-    baseStatus.totalProcessed = this.totalProcessed || 0;
-    baseStatus.statistics = {
-      ...baseStatus.statistics,
-      successRate: this.totalProcessed > 0 ? 
-        ((this.totalProcessed - baseStatus.statistics.errors) / this.totalProcessed * 100).toFixed(2) + '%' : 
-        'N/A'
-    };
-    
-    // Add DuckDB status
-    baseStatus.duckdb = {
-      status: this.duckDBService.isAvailable ? 'available' : 'fallback',
-      initialized: this.duckDBService.isAvailable,
-      mode: this.duckDBService.dbType || 'fallback'
-    };
-    
-    return baseStatus;
-  }
-
   async close() {
     if (this.duckDBService) {
       await this.duckDBService.close();
@@ -566,10 +554,10 @@ class PipelineService {
     // Add DuckDB status if available
     if (this.duckDBService) {
       try {
-        const duckdbStatus = await this.duckDBService.getStatus();
         baseStatus.duckdb = {
-          status: duckdbStatus.status || 'unknown',
-          initialized: duckdbStatus.initialized || false
+          status: this.duckDBService.isAvailable ? 'available' : 'fallback',
+          initialized: this.duckDBInitialized && this.duckDBService.isAvailable,
+          mode: this.duckDBService.dbType || 'fallback'
         };
       } catch (error) {
         baseStatus.duckdb = {
@@ -578,6 +566,11 @@ class PipelineService {
           error: error.message
         };
       }
+    } else {
+      baseStatus.duckdb = {
+        status: 'not_initialized',
+        initialized: false
+      };
     }
     
     return baseStatus;
