@@ -33,6 +33,7 @@ class DuckDBService {
       // Try DuckDB first
       const duckdbAvailable = await this.checkDuckDB();
       if (duckdbAvailable) {
+        logger.info('DuckDB is available, initializing...');
         await this.initializeDuckDB();
         return { 
           success: true, 
@@ -40,11 +41,14 @@ class DuckDBService {
           database: 'duckdb',
           dbPath: this.duckdbPath
         };
+      } else {
+        logger.warn('DuckDB not available, checking SQLite...');
       }
 
       // Try SQLite as fallback
       const sqliteAvailable = await this.checkSQLite();
       if (sqliteAvailable) {
+        logger.info('SQLite is available, initializing...');
         await this.initializeSQLite();
         return { 
           success: true, 
@@ -52,6 +56,8 @@ class DuckDBService {
           database: 'sqlite',
           dbPath: this.sqlitePath
         };
+      } else {
+        logger.warn('SQLite not available, using file-based fallback');
       }
 
       // Use file-based fallback
@@ -81,27 +87,46 @@ class DuckDBService {
     try {
       logger.info('Testing DuckDB availability...');
       
-      // Test with timeout
+      // First, check if DuckDB module can be required
+      let duckdb;
+      try {
+        duckdb = require('duckdb');
+        logger.info('DuckDB module loaded successfully');
+      } catch (requireError) {
+        logger.error('DuckDB module failed to load:', requireError.message);
+        return false;
+      }
+      
+      // Test with database creation (increase timeout for containers)
       return await Promise.race([
         new Promise((resolve) => {
           try {
-            const duckdb = require('duckdb');
             const testDb = new duckdb.Database(':memory:', (err) => {
               if (err) {
+                logger.error('DuckDB connection test failed:', err.message);
                 resolve(false);
               } else {
-                testDb.close();
+                logger.info('✅ DuckDB connection test successful');
+                try {
+                  testDb.close();
+                } catch (closeError) {
+                  logger.warn('DuckDB close warning:', closeError.message);
+                }
                 resolve(true);
               }
             });
           } catch (error) {
+            logger.error('DuckDB database creation failed:', error.message);
             resolve(false);
           }
         }),
-        new Promise((resolve) => setTimeout(() => resolve(false), 3000)) // 3 second timeout
+        new Promise((resolve) => setTimeout(() => {
+          logger.warn('DuckDB connection test timed out after 10 seconds');
+          resolve(false);
+        }, 10000)) // Increased timeout to 10 seconds for Docker
       ]);
     } catch (error) {
-      logger.warn('DuckDB check failed:', error.message);
+      logger.error('DuckDB check failed:', error.message);
       return false;
     }
   }
@@ -123,12 +148,19 @@ class DuckDBService {
   async initializeDuckDB() {
     const duckdb = require('duckdb');
     
-    // Ensure database directory exists
-    await fs.mkdir(path.dirname(this.duckdbPath), { recursive: true });
+    // Ensure database directory exists with proper permissions
+    try {
+      await fs.mkdir(path.dirname(this.duckdbPath), { recursive: true });
+      logger.info('Database directory created:', path.dirname(this.duckdbPath));
+    } catch (error) {
+      logger.warn('Database directory creation warning:', error.message);
+    }
     
     return new Promise((resolve, reject) => {
+      logger.info('Creating DuckDB database at:', this.duckdbPath);
       this.db = new duckdb.Database(this.duckdbPath, (err) => {
         if (err) {
+          logger.error('DuckDB database creation failed:', err.message);
           reject(err);
         } else {
           this.isAvailable = true;

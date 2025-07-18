@@ -1,6 +1,7 @@
 // DuckDB integration with fallback support
 const logger = require('../../utils/logger');
 const DuckDBService = require('../duckDBService');
+const duckDBSingleton = require('../duckDBSingleton');
 const buildToolsChecker = require('../../utils/buildToolsChecker');
 const path = require('path');
 const fs = require('fs');
@@ -29,13 +30,12 @@ class TransformationService {
       this.rawDataPath = rawDir;
       this.transformedDataPath = transformedDir;
 
-      // Initialize DuckDB service
-      this.duckDBService = new DuckDBService(this.config);
-      const dbResult = await this.duckDBService.initialize();
+      // Initialize DuckDB service using singleton
+      this.duckDBService = await duckDBSingleton.getInstance();
       
       logger.info('Transformation storage initialized successfully', {
-        duckdb: dbResult.mode === 'duckdb',
-        fallback: dbResult.mode === 'fallback'
+        duckdb: this.duckDBService.isAvailable,
+        fallback: !this.duckDBService.isAvailable
       });
     } catch (error) {
       logger.error('Transformation storage initialization failed:', error);

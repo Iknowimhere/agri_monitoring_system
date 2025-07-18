@@ -4,6 +4,7 @@ const logger = require('../../utils/logger');
 const FileUtils = require('../../utils/fileUtils');
 const DateUtils = require('../../utils/dateUtils');
 const DuckDBService = require('../duckDBService');
+const duckDBSingleton = require('../duckDBSingleton');
 
 class StorageService {
   constructor(config) {
@@ -11,8 +12,8 @@ class StorageService {
     this.dataPath = config.paths.processedData || 'data/processed';
     this.dbPath = path.dirname(config.database.sqlitePath) || 'data';
     
-    // Initialize DuckDB service
-    this.duckDBService = new DuckDBService(config);
+    // Initialize DuckDB service using singleton
+    this.duckDBService = null;
     this.initializeDatabase();
     
     this.ensureDirectories();
@@ -20,7 +21,7 @@ class StorageService {
 
   async initializeDatabase() {
     try {
-      await this.duckDBService.initialize();
+      this.duckDBService = await duckDBSingleton.getInstance();
       logger.info('StorageService: DuckDB initialized for data storage');
     } catch (error) {
       logger.warn('StorageService: Failed to initialize DuckDB, using file fallback:', error);

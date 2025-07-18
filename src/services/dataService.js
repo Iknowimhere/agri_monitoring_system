@@ -1,5 +1,6 @@
 const logger = require('../utils/logger');
 const DuckDBService = require('./duckDBService');
+const duckDBSingleton = require('./duckDBSingleton');
 const DateUtils = require('../utils/dateUtils');
 const config = require('../config/config');
 
@@ -22,15 +23,13 @@ class DataService {
         this.duckDBService = global.mockDuckDBService;
         logger.info('DataService: Using mocked DuckDB service for testing');
       } else {
-        this.duckDBService = new DuckDBService(config);
+        this.duckDBService = await duckDBSingleton.getInstance();
       }
-      
-      const result = await this.duckDBService.initialize();
       
       this.initialized = true;
       logger.info('DataService: DuckDB initialized successfully', { 
-        mode: result.mode,
-        success: result.success 
+        mode: this.duckDBService.dbType || 'fallback',
+        success: this.duckDBService.isAvailable 
       });
     } catch (error) {
       logger.error('DataService: Failed to initialize DuckDB:', error);

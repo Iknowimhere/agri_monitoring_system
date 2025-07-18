@@ -4,6 +4,7 @@ const TransformationService = require('./transformation/transformationService');
 const ValidationService = require('./validation/validationService');
 const StorageService = require('./storage/storageService');
 const DuckDBService = require('./duckDBService');
+const duckDBSingleton = require('./duckDBSingleton');
 const FileUtils = require('../utils/fileUtils');
 const DateUtils = require('../utils/dateUtils');
 const config = require('../config/config');
@@ -44,8 +45,8 @@ class PipelineService {
   };
 
   constructor() {
-    // Initialize DuckDB service for pipeline operations
-    this.duckDBService = new DuckDBService(config);
+    // Use the global DuckDB service instance instead of creating a new one
+    this.duckDBService = null;
     this.duckDBInitialized = false;
 
     this.status = {
@@ -64,18 +65,29 @@ class PipelineService {
     this.isRunning = false;
     this.shouldStop = false;
     
-    // Initialize DuckDB service in background
-    this.initializeDuckDB();
+    // Initialize DuckDB service and wait for completion
+    this.duckDBInitializationPromise = this.initializeDuckDB();
   }
 
   async initializeDuckDB() {
     try {
-      await this.duckDBService.initialize();
+      logger.info('PipelineService: Initializing DuckDB...');
+      
+      // Get the singleton DuckDB instance
+      this.duckDBService = await duckDBSingleton.getInstance();
       this.duckDBInitialized = true;
-      logger.info('PipelineService: DuckDB initialized successfully');
+      
+      logger.info('PipelineService: Using singleton DuckDB service');
+      
+      return {
+        success: true,
+        mode: this.duckDBService.dbType || 'duckdb',
+        initialized: this.duckDBService.isAvailable
+      };
     } catch (error) {
       logger.error('PipelineService: Failed to initialize DuckDB:', error);
       this.duckDBInitialized = false;
+      throw error;
     }
   }
 
@@ -105,13 +117,13 @@ class PipelineService {
 
       logger.info('Starting full pipeline execution', { startDate, endDate, forceReprocess });
 
-      // Initialize DuckDB service for pipeline
+      // Ensure DuckDB initialization is complete
       this.status.stage = 'database_initialization';
       this.status.progress = 5;
       
       try {
-        await this.duckDBService.initialize();
-        logger.info('DuckDB initialized for pipeline operations');
+        await this.duckDBInitializationPromise;
+        logger.info('DuckDB initialization confirmed for pipeline operations');
       } catch (error) {
         logger.warn('DuckDB initialization failed, continuing with fallback:', error);
       }
@@ -437,16 +449,14 @@ class PipelineService {
       if (isTestMode && global.mockDuckDBService) {
         duckDBService = global.mockDuckDBService;
       } else {
-        duckDBService = new DuckDBService(config);
+        // Use singleton DuckDB service to avoid file locking issues
+        duckDBService = await duckDBSingleton.getInstance();
+        duckdbResults = {
+          initialized: duckDBService.isAvailable,
+          status: duckDBService.isAvailable ? 'connected' : 'failed',
+          database: duckDBService.dbType || null
+        };
       }
-      
-      // Initialize DuckDB
-      const initResult = await duckDBService.initialize();
-      duckdbResults = {
-        initialized: initResult.success,
-        status: initResult.success ? 'connected' : 'failed',
-        database: initResult.database || null
-      };
       
       const processedData = [];
       
@@ -550,6 +560,15 @@ class PipelineService {
   // Instance method for status reporting
   async getStatus() {
     const baseStatus = { ...this.status };
+    
+    // Wait for DuckDB initialization to complete if it's still in progress
+    if (this.duckDBInitializationPromise) {
+      try {
+        await this.duckDBInitializationPromise;
+      } catch (error) {
+        logger.warn('DuckDB initialization still in progress');
+      }
+    }
     
     // Add DuckDB status if available
     if (this.duckDBService) {

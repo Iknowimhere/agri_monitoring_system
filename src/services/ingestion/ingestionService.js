@@ -32,36 +32,71 @@ class IngestionService {
     }
   }
 
-  async ingestData(data) {
-    logger.info('Starting data ingestion process');
+  async ingestData(options = {}) {
+    logger.info('Starting data ingestion process', options);
 
     const stats = {
       recordsProcessed: 0,
       recordsSkipped: 0,
-      errors: 0
+      errors: 0,
+      filesProcessed: 0
     };
 
     try {
-      if (!Array.isArray(data)) {
-        data = [data];
-      }
-
-      for (const record of data) {
-        try {
-          if (this.validateRecord(record)) {
-            // Save to raw data file
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `ingested_${timestamp}.json`;
-            const filePath = path.join(this.rawDataPath, filename);
+      // If options contains startDate/endDate, process files from raw directory
+      if (options.startDate || options.endDate || !options.data) {
+        const filesToProcess = await this.getFilesToProcess(options.startDate, options.endDate);
+        
+        logger.info(`Found ${filesToProcess.length} files to process`);
+        
+        for (const filePath of filesToProcess) {
+          try {
+            let fileStats;
             
-            await fs.promises.writeFile(filePath, JSON.stringify([record], null, 2));
-            stats.recordsProcessed++;
-          } else {
-            stats.recordsSkipped++;
+            if (filePath.endsWith('.parquet')) {
+              fileStats = await this.ingestParquetFile(filePath);
+            } else if (filePath.endsWith('.json')) {
+              fileStats = await this.ingestJsonFile(filePath);
+            } else {
+              logger.warn(`Unsupported file type: ${filePath}`);
+              continue;
+            }
+            
+            stats.recordsProcessed += fileStats.recordsProcessed;
+            stats.recordsSkipped += fileStats.recordsSkipped;
+            stats.errors += fileStats.errors;
+            stats.filesProcessed++;
+            
+          } catch (error) {
+            stats.errors++;
+            logger.error(`Failed to process file ${filePath}:`, error);
           }
-        } catch (error) {
-          stats.errors++;
-          logger.error('Failed to ingest record:', error);
+        }
+      } else {
+        // Legacy behavior: process data array directly
+        const data = options.data || options;
+        
+        if (!Array.isArray(data)) {
+          data = [data];
+        }
+
+        for (const record of data) {
+          try {
+            if (this.validateRecord(record)) {
+              // Save to raw data file
+              const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+              const filename = `ingested_${timestamp}.json`;
+              const filePath = path.join(this.rawDataPath, filename);
+              
+              await fs.promises.writeFile(filePath, JSON.stringify([record], null, 2));
+              stats.recordsProcessed++;
+            } else {
+              stats.recordsSkipped++;
+            }
+          } catch (error) {
+            stats.errors++;
+            logger.error('Failed to ingest record:', error);
+          }
         }
       }
 
@@ -253,6 +288,43 @@ class IngestionService {
       return stats;
     } catch (error) {
       logger.error(`Parquet file ingestion failed: ${filePath}`, error);
+      throw error;
+    }
+  }
+
+  async ingestJsonFile(filePath) {
+    logger.info(`Starting JSON file ingestion: ${filePath}`);
+
+    const stats = {
+      recordsProcessed: 0,
+      recordsSkipped: 0,
+      errors: 0
+    };
+
+    try {
+      const fileContent = await fs.promises.readFile(filePath, 'utf8');
+      const data = JSON.parse(fileContent);
+      
+      const records = Array.isArray(data) ? data : [data];
+      
+      for (const record of records) {
+        try {
+          if (this.validateRecord(record)) {
+            // Process the record (it's already ingested, just validate)
+            stats.recordsProcessed++;
+          } else {
+            stats.recordsSkipped++;
+          }
+        } catch (error) {
+          stats.errors++;
+          logger.error('Failed to process JSON record:', error);
+        }
+      }
+
+      logger.info(`JSON file ingestion completed: ${filePath}`, stats);
+      return stats;
+    } catch (error) {
+      logger.error(`JSON file ingestion failed: ${filePath}`, error);
       throw error;
     }
   }

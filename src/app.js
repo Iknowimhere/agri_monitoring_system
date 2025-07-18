@@ -11,6 +11,7 @@ const config = require('./config/config');
 
 // Import DuckDB service for global initialization
 const DuckDBService = require('./services/duckDBService');
+const duckDBSingleton = require('./services/duckDBSingleton');
 
 // Import routes
 const pipelineRoutes = require('./routes/pipeline');
@@ -26,18 +27,20 @@ let globalDuckDBService = null;
 async function initializeDatabase() {
   try {
     logger.info('Initializing global DuckDB service...');
-    globalDuckDBService = new DuckDBService(config);
-    const result = await globalDuckDBService.initialize();
+    globalDuckDBService = await duckDBSingleton.getInstance();
     
     logger.info('Global DuckDB service initialized', { 
-      mode: result.mode,
-      success: result.success 
+      mode: globalDuckDBService.dbType || 'fallback',
+      success: globalDuckDBService.isAvailable 
     });
     
     // Make DuckDB service available globally
     app.locals.duckDBService = globalDuckDBService;
     
-    return result;
+    return {
+      success: globalDuckDBService.isAvailable,
+      mode: globalDuckDBService.dbType || 'fallback'
+    };
   } catch (error) {
     logger.error('Failed to initialize DuckDB service:', error);
     throw error;

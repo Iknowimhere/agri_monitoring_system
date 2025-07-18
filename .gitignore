@@ -49,3 +49,6 @@ temp/
 
 # Docker
 .docker/
+
+#duckdb
+data/database/*
