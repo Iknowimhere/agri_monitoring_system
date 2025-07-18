@@ -22,8 +22,8 @@ data/raw/           # Raw Parquet files (daily)
 
 data/processed/     # Cleaned and transformed data
     └── partitioned by date/sensor_id
-    
-demo/demo.mp4 #demponstration video explainin ghow the pipeline works
+
+demo/demo.txt #contains link for demponstration video explainin ghow the pipeline works
 
 src/
     ├── routes/         # Express.js API routes
